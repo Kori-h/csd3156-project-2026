@@ -1,61 +1,83 @@
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
-}
+    plugins {
+        alias(libs.plugins.android.application)
+        alias(libs.plugins.kotlin.android)
+        alias(libs.plugins.kotlin.compose)
 
-android {
-    namespace = "com.example.csd3156project2026"
-    compileSdk {
-        version = release(36)
+        id("com.google.gms.google-services")
     }
 
-    defaultConfig {
-        applicationId = "com.example.csd3156project2026"
-        minSdk = 24
-        targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+    android {
+        namespace = "com.example.csd3156project2026"
+        compileSdk {
+            version = release(36)
+        }
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
+        defaultConfig {
+            applicationId = "com.example.csd3156project2026"
+            minSdk = 24
+            targetSdk = 36
+            versionCode = 1
+            versionName = "1.0"
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+            manifestPlaceholders["GOOGLE_API_KEY"] = project.properties["GOOGLE_API_KEY"]?.toString() ?: ""
+        }
+
+        buildTypes {
+            release {
+                isMinifyEnabled = false
+                proguardFiles(
+                    getDefaultProguardFile("proguard-android-optimize.txt"),
+                    "proguard-rules.pro"
+                )
+            }
+        }
+        compileOptions {
+            sourceCompatibility = JavaVersion.VERSION_11
+            targetCompatibility = JavaVersion.VERSION_11
+        }
+        kotlinOptions {
+            jvmTarget = "11"
+        }
+        buildFeatures {
+            compose = true
+            buildConfig = true
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-    buildFeatures {
-        compose = true
-    }
-}
 
-dependencies {
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.navigation3.ui)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
-}
+    dependencies {
+        implementation(libs.androidx.core.ktx)
+        implementation(libs.androidx.lifecycle.runtime.ktx)
+        implementation(libs.androidx.activity.compose)
+        implementation(platform(libs.androidx.compose.bom))
+        implementation(libs.androidx.compose.ui)
+        implementation(libs.androidx.compose.ui.graphics)
+        implementation(libs.androidx.compose.ui.tooling.preview)
+        implementation(libs.androidx.compose.material3)
+        implementation(libs.androidx.navigation3.ui)
+
+        implementation("com.google.android.gms:play-services-location:21.3.0")
+        implementation("com.google.maps.android:maps-compose:2.14.0")
+
+        implementation("com.google.android.libraries.places:places:5.1.1")
+
+        implementation("androidx.camera:camera-camera2:1.5.3")
+        implementation("androidx.camera:camera-lifecycle:1.5.3")
+        implementation("androidx.camera:camera-view:1.5.3")
+
+        implementation(platform("com.google.firebase:firebase-bom:34.8.0"))
+        implementation("com.google.firebase:firebase-firestore")
+        implementation("com.google.firebase:firebase-storage")
+        implementation("com.google.firebase:firebase-auth")
+
+        implementation("com.google.accompanist:accompanist-permissions:0.31.5-beta")
+
+        testImplementation(libs.junit)
+        androidTestImplementation(libs.androidx.junit)
+        androidTestImplementation(libs.androidx.espresso.core)
+        androidTestImplementation(platform(libs.androidx.compose.bom))
+        androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+        debugImplementation(libs.androidx.compose.ui.tooling)
+        debugImplementation(libs.androidx.compose.ui.test.manifest)
+    }
