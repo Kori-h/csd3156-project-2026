@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.unit.sp
@@ -37,6 +38,10 @@ fun UploadScreen(
     var locationName by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var rating by remember { mutableStateOf(0) }
+
+    var locationError by remember { mutableStateOf<String?>(null) }
+    var descriptionError by remember { mutableStateOf<String?>(null) }
+    var imageError by remember { mutableStateOf<String?>(null) }
 
     val cameraLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
@@ -95,10 +100,18 @@ fun UploadScreen(
             Text("Location")
             OutlinedTextField(
                 value = locationName,
-                onValueChange = { locationName = it },
+                onValueChange = {
+                    locationName = it
+                    locationError = null
+                },
                 modifier = Modifier.fillMaxWidth(),
+                isError = locationError != null,
                 placeholder = { Text("Enter location name") }
             )
+
+            locationError?.let {
+                Text(it, color = Color.Red)
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -147,14 +160,12 @@ fun UploadScreen(
                     }
                 } else {
 
-                    // Image
-                    androidx.compose.foundation.Image(
+                    Image(
                         bitmap = imageBitmap!!.asImageBitmap(),
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize()
                     )
 
-                    // Small circular X button
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
@@ -172,7 +183,15 @@ fun UploadScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
+
+            imageError?.let {
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
             // From File Button
             Button(onClick = {
@@ -209,13 +228,21 @@ fun UploadScreen(
             Text("Description")
             OutlinedTextField(
                 value = description,
-                onValueChange = { description = it },
+                onValueChange = {
+                    description = it
+                    descriptionError = null
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp),
+                isError = descriptionError != null,
                 placeholder = { Text("Write at least 4 lines...") },
                 maxLines = 6
             )
+
+            descriptionError?.let {
+                Text(it, color = Color.Red)
+            }
 
             errorMessage?.let {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -224,18 +251,36 @@ fun UploadScreen(
 
             // ⬇Upload button fixed at bottom
             Button(
-                onClick = { onClose() },
-                enabled = imageBitmap != null,
+                onClick = {
+
+                    var isValid = true
+
+                    if (imageBitmap == null) {
+                        imageError = "Image is required"
+                        isValid = false
+                    } else {
+                        imageError = null
+                    }
+
+                    if (locationName.isBlank()) {
+                        locationError = "Location cannot be empty"
+                        isValid = false
+                    }
+
+                    if (description.isBlank()) {
+                        descriptionError = "Description cannot be empty"
+                        isValid = false
+                    }
+
+                    if (isValid) {
+                        onClose()
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                Text(
-                    if (imageBitmap != null)
-                        "Upload"
-                    else
-                        "Not Ready to Upload"
-                )
+                Text("Upload")
             }
 
             Spacer(modifier = Modifier.weight(1f)) // pushes Upload to bottom
