@@ -12,6 +12,28 @@
             version = release(36)
         }
 
+    signingConfigs {
+        debug {
+            storeFile = file("debug-shared.keystore") // path to your shared keystore
+            storePassword = "android"                // password you used when generating it
+            keyAlias = "debugkey"                    // alias you used
+            keyPassword = "android"                  // key password
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig = signingConfigs.debug
+        }
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
         defaultConfig {
             applicationId = "com.example.csd3156project2026"
             minSdk = 24
