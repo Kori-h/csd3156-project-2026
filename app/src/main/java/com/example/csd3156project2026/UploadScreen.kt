@@ -18,6 +18,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import java.io.File
 
@@ -25,45 +28,15 @@ import java.io.File
 fun UploadScreen(
     onClose: () -> Unit
 ) {
-    var selectedTab by remember { mutableStateOf("Upload New") }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()) {
-
-        // Top Buttons
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Button(onClick = { selectedTab = "Upload New" }) {
-                Text("Upload New")
-            }
-            Button(onClick = { selectedTab = "Upload Existing" }) {
-                Text("Upload Existing")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        UploadContent(
-            title = selectedTab,
-            onClose = onClose
-        )
-    }
-}
-
-@Composable
-fun UploadContent(
-    title: String,
-    onClose: () -> Unit
-) {
     val context = LocalContext.current
 
     var photoUri by remember { mutableStateOf<Uri?>(null) }
     var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    var locationName by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var rating by remember { mutableStateOf(0) }
 
     val cameraLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
@@ -82,8 +55,7 @@ fun UploadContent(
         ) { isGranted ->
             if (!isGranted) {
                 errorMessage = "Camera permission denied"
-            }
-            else {
+            } else {
                 cameraLauncher.launch(photoUri!!)
             }
         }
@@ -92,7 +64,6 @@ fun UploadContent(
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.PickVisualMedia()
         ) { uri: Uri? ->
-
             if (uri != null) {
                 val mimeType = context.contentResolver.getType(uri)
 
@@ -103,72 +74,107 @@ fun UploadContent(
                 } else {
                     errorMessage = "file not supported"
                 }
-
             } else {
                 errorMessage = "No image selected"
             }
         }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
 
-        Text("Location: Placeholder Location")
-        Text("GPS: 1.3521, 103.8198")
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Grey Box
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(250.dp)
-                .background(Color.LightGray, RoundedCornerShape(12.dp)),
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
+                .padding(16.dp)
         ) {
-            if (imageBitmap == null) {
-                Button(onClick = {
 
-                    if (ContextCompat.checkSelfPermission(
-                            context,
-                            android.Manifest.permission.CAMERA
-                        ) == PackageManager.PERMISSION_GRANTED
-                    ) {
+            // Location Input
+            Text("Location")
+            OutlinedTextField(
+                value = locationName,
+                onValueChange = { locationName = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Enter location name") }
+            )
 
-                        val photoFile = File(
-                            context.getExternalFilesDir("Pictures"),
-                            "photo_${System.currentTimeMillis()}.jpg"
-                        )
+            Spacer(modifier = Modifier.height(8.dp))
 
-                        photoUri = FileProvider.getUriForFile(
-                            context,
-                            "${context.packageName}.provider",
-                            photoFile
-                        )
+            // GPS Below Location
+            Text("GPS: 1.3521, 103.8198")
 
-                        cameraLauncher.launch(photoUri!!)
+            Spacer(modifier = Modifier.height(16.dp))
 
-                    } else {
-                        cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+            // Image Preview Box
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(250.dp)
+                    .background(Color.LightGray, RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+
+                if (imageBitmap == null) {
+                    Button(onClick = {
+
+                        if (ContextCompat.checkSelfPermission(
+                                context,
+                                android.Manifest.permission.CAMERA
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+
+                            val photoFile = File(
+                                context.getExternalFilesDir("Pictures"),
+                                "photo_${System.currentTimeMillis()}.jpg"
+                            )
+
+                            photoUri = FileProvider.getUriForFile(
+                                context,
+                                "${context.packageName}.provider",
+                                photoFile
+                            )
+
+                            cameraLauncher.launch(photoUri!!)
+
+                        } else {
+                            cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                        }
+
+                    }) {
+                        Text("Use Camera")
                     }
+                } else {
 
-                }) {
-                    Text("Use Camera")
+                    // Image
+                    androidx.compose.foundation.Image(
+                        bitmap = imageBitmap!!.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize()
+                    )
+
+                    // Small circular X button
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .size(28.dp)
+                            .background(Color.Black.copy(alpha = 0.6f), shape = CircleShape)
+                            .clickable {
+                                imageBitmap = null
+                                photoUri = null
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("X", color = Color.White)
+                    }
                 }
-            } else {
-                androidx.compose.foundation.Image(
-                    bitmap = imageBitmap!!.asImageBitmap(),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize()
-                )
             }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-        Row(horizontalArrangement = Arrangement.SpaceEvenly) {
+            // From File Button
             Button(onClick = {
                 photoPickerLauncher.launch(
                     PickVisualMediaRequest(
@@ -178,23 +184,61 @@ fun UploadContent(
             }) {
                 Text("From File")
             }
-        }
 
-        errorMessage?.let {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = it, color = Color.Red)
-        }
+            Spacer(modifier = Modifier.height(16.dp))
 
-        if (imageBitmap != null) {
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(
-                onClick = {
-                    onClose() // Just return to Home
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Upload")
+            // Rating System
+            Row {
+                for (i in 1..5) {
+                    Text(
+                        text = "★",
+                        fontSize = 28.sp,
+                        color = if (i <= rating) Color(0xFFFFC107) else Color.Gray,
+                        modifier = Modifier
+                            .padding(end = 4.dp)
+                            .clickable {
+                                rating = i
+                            }
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Description Box (min 4 lines)
+            Text("Description")
+            OutlinedTextField(
+                value = description,
+                onValueChange = { description = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp),
+                placeholder = { Text("Write at least 4 lines...") },
+                maxLines = 6
+            )
+
+            errorMessage?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = it, color = Color.Red)
+            }
+
+            // ⬇Upload button fixed at bottom
+            Button(
+                onClick = { onClose() },
+                enabled = imageBitmap != null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    if (imageBitmap != null)
+                        "Upload"
+                    else
+                        "Not Ready to Upload"
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(1f)) // pushes Upload to bottom
         }
     }
 }
