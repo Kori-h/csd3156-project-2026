@@ -63,9 +63,24 @@ fun NavLogic(modifier: Modifier = Modifier) {
                         }
                     )
                 }
+
                 is Home -> NavEntry(key) {
-                    HomeScreen(modifier)
+                    HomeScreen(
+                        modifier,
+                        onUploadClick = {
+                            backStack.add(Upload)
+                        }
+                    )
                 }
+
+                is Upload -> NavEntry(key) {
+                    UploadScreen(
+                        onClose = {
+                            backStack.removeLastOrNull()
+                        }
+                    )
+                }
+
                 else -> NavEntry(key = Unit) {
                     Text(text = "Unknown route")
                 }
@@ -73,3 +88,5 @@ fun NavLogic(modifier: Modifier = Modifier) {
         }
     )
 }
+
+data object Upload

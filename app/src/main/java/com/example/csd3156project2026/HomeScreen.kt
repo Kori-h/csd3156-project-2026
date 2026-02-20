@@ -140,7 +140,9 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun HomeScreen(modifier: Modifier = Modifier,
+               onUploadClick: () -> Unit
+) {
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -148,6 +150,15 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     ) {
         Text(text = "Welcome Home", modifier = Modifier.padding(16.dp))
         MapViewComposable(modifier = Modifier.fillMaxWidth().height(300.dp))
+
+        Button(
+            onClick = onUploadClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text("Upload")
+        }
     }
 }
 
