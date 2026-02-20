@@ -8,31 +8,7 @@
 
     android {
         namespace = "com.example.csd3156project2026"
-        compileSdk {
-            version = release(36)
-        }
-
-    signingConfigs {
-        debug {
-            storeFile = file("debug-shared.keystore") // path to your shared keystore
-            storePassword = "android"                // password you used when generating it
-            keyAlias = "debugkey"                    // alias you used
-            keyPassword = "android"                  // key password
-        }
-    }
-
-    buildTypes {
-        debug {
-            signingConfig = signingConfigs.debug
-        }
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
+        compileSdk = 36
 
         defaultConfig {
             applicationId = "com.example.csd3156project2026"
@@ -46,7 +22,19 @@
             manifestPlaceholders["GOOGLE_API_KEY"] = project.properties["GOOGLE_API_KEY"]?.toString() ?: ""
         }
 
+        signingConfigs {
+            getByName("debug") {
+                storeFile = file("debug-shared.keystore")
+                storePassword = "android"
+                keyAlias = "debugkey"
+                keyPassword = "android"
+            }
+        }
+
         buildTypes {
+            getByName("debug") {
+                signingConfig = signingConfigs.getByName("debug")
+            }
             release {
                 isMinifyEnabled = false
                 proguardFiles(
