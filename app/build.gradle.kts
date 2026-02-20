@@ -18,8 +18,7 @@
             versionName = "1.0"
 
             testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-            manifestPlaceholders["GOOGLE_API_KEY"] = project.properties["GOOGLE_API_KEY"]?.toString() ?: ""
+            manifestPlaceholders["GOOGLE_API_KEY"] = rootProject.extra["GOOGLE_API_KEY"] as String
         }
 
         signingConfigs {
