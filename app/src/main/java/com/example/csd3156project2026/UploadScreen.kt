@@ -27,6 +27,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import com.google.android.gms.maps.model.LatLng
+import getCurrentLocation
 import java.io.File
 
 @Composable
@@ -146,8 +148,19 @@ fun UploadScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            val context = LocalContext.current
+            var location by remember { mutableStateOf<LatLng?>(null) }
+
             // GPS Below Location
-            Text("GPS: 1.3521, 103.8198")
+            LaunchedEffect(Unit) {
+                location = getCurrentLocation(context)
+            }
+
+            Text(
+                text = location?.let {
+                    "GPS: ${it.latitude}, ${it.longitude}"
+                } ?: "Getting location..."
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
