@@ -13,6 +13,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntry
@@ -48,7 +50,23 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NavLogic(modifier: Modifier = Modifier) {
-    val backStack = remember { mutableStateListOf<Any>(Login) }
+    val backStack = rememberSaveable(
+        saver = listSaver(
+            save = { list -> list.map { it.toString() } },
+            restore = { saved ->
+                mutableStateListOf(*saved.map { key ->
+                    when (key) {
+                        "Login" -> Login
+                        "Home" -> Home
+                        "Upload" -> Upload
+                        else -> Login
+                    }
+                }.toTypedArray())
+            }
+        )
+    ) {
+        mutableStateListOf<Any>(Login)
+    }
 
     NavDisplay(
         backStack = backStack,
@@ -58,7 +76,7 @@ fun NavLogic(modifier: Modifier = Modifier) {
                 is Login -> NavEntry(key) {
                     LoginScreen(
                         modifier,
-                        onLogin = {
+                        onLoginSuccess = {
                             backStack.add(Home)
                         }
                     )

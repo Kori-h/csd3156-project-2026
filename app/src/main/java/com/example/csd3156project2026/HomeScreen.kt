@@ -2,12 +2,15 @@ package com.example.csd3156project2026
 
 import android.content.Context
 import android.graphics.Bitmap
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,10 +18,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.android.gms.maps.model.CameraPosition
@@ -32,20 +38,56 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
 import java.io.File
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.delay
 
 data object Home
 
 @Composable
 fun MapViewComposable(modifier: Modifier = Modifier) {
     val db = FirebaseFirestore.getInstance()
-    var firestoreMarkers by remember { mutableStateOf(listOf<MarkerData>()) }
+    var firestoreMarkers by rememberSaveable { mutableStateOf(listOf<MarkerData>()) }
+    var selectedMarkerReviews by rememberSaveable { mutableStateOf(listOf<ReviewData>()) }
 
     val collectionPath = "markers"
     val defaultLocation = LatLng(1.3521, 103.8198)
 
-    var showReviewDialog by remember { mutableStateOf(false)}
-    var selectedMarker by remember { mutableStateOf<MarkerData?>(null) }
+    var showReviewDialog by rememberSaveable { mutableStateOf(false)}
+    var selectedMarker by rememberSaveable { mutableStateOf<MarkerData?>(null) }
 
+    val user = FirebaseAuth.getInstance().currentUser
+    val userId = user?.email?.substringBefore("@") ?: "Anonymous"
+
+    var reviewsLoading by rememberSaveable { mutableStateOf(false) }
+
+    // For drag refresh
+    val scope = rememberCoroutineScope()
+    var dragAmount by remember { mutableStateOf(0f) }
+
+    // Function to fetch reviews from Firestore
+    fun fetchReviews(markerId: String) {
+        reviewsLoading = true
+        db.collection("reviews")
+            .whereEqualTo("markerId", markerId)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                selectedMarkerReviews = snapshot.documents.map { doc ->
+                    ReviewData(
+                        markerId = doc.getString("markerId") ?: "",
+                        userId = doc.getString("userId") ?: "",
+                        rating = doc.getLong("rating")?.toInt() ?: 0,
+                        comment = doc.getString("comment") ?: "",
+                        imageUrl = doc.getString("imageUrl")
+                    )
+                }
+                reviewsLoading = false
+            }
+            .addOnFailureListener {
+                it.printStackTrace()
+                selectedMarkerReviews = emptyList()
+                reviewsLoading = false
+            }
+    }
 
     // Function to fetch markers from Firestore
     fun fetchMarkers() {
@@ -65,9 +107,13 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
                 e.printStackTrace()
             }
     }
-    // Initial load (This will only call the function once)
+
+    // Refresh markers every 30s
     LaunchedEffect(Unit) {
-        fetchMarkers()
+        while (true) {
+            fetchMarkers()
+            delay(30000)
+        }
     }
 
     // Camera focus on first marker or default
@@ -78,62 +124,106 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
         )
     }
 
-    Column(modifier = modifier) {
-        Button(
-            onClick = { fetchMarkers() },
-            modifier = Modifier.padding(8.dp)
-        ) {
-            Text("Refresh")
-        }
-
+    Column(modifier = modifier.fillMaxSize()) {
         GoogleMap(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.fillMaxWidth()
+                               .height(300.dp),
             cameraPositionState = cameraPositionState,
             properties = MapProperties(isMyLocationEnabled = false),
             uiSettings = MapUiSettings(
                 zoomControlsEnabled = true,
                 myLocationButtonEnabled = false
-            )
+            ),
+            onMapClick = { latLng ->
+                selectedMarker = null
+                selectedMarkerReviews = emptyList()
+            }
         ) {
             firestoreMarkers.forEach { marker ->
+                val markerState = rememberMarkerState(
+                    position = marker.toLatLng()
+                )
                 Marker(
-                    state = rememberMarkerState(position = marker.toLatLng()),
+                    state = markerState,
                     title = marker.title,
                     snippet = marker.snippet,
                     anchor = Offset(0.5f, 1.0f),
-                    onInfoWindowClick = {
-                        // Trigger the Review Dialog or Navigate to a Review Screen
-                        selectedMarker = marker // Current marker that was selected
-                        showReviewDialog = true // Flip the switch to show the dialog
+                    onClick = {
+                        selectedMarker = marker
+                        fetchReviews(marker.title)
+                        true
                     }
                 )
             }
         }
 
         // Debug Text
-        firestoreMarkers.forEach { marker ->
-            Text(
-                text = "Title: ${marker.title}\nSnippet: ${marker.snippet}",
-                modifier = Modifier.padding(8.dp)
-            )
+        //firestoreMarkers.forEach { marker ->
+        //    Text(
+        //        text = "Title: ${marker.title}\nSnippet: ${marker.snippet}",
+        //        modifier = Modifier.padding(8.dp)
+        //    )
+        //}
+
+        selectedMarker?.let { marker ->
+            Column(modifier = Modifier.fillMaxWidth()
+                                      .padding(8.dp)) {
+                Text(marker.title, fontSize = 18.sp)
+                Text(marker.snippet, fontSize = 14.sp, color = androidx.compose.ui.graphics.Color.Gray)
+
+                Button(
+                    onClick = { showReviewDialog = true },
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth()
+                ) {
+                    Text("Add Review")
+                }
+            }
+
+            if (reviewsLoading) {
+                Text("Loading reviews...", modifier = Modifier.padding(8.dp))
+            } else if (selectedMarkerReviews.isEmpty()) {
+                Text("No reviews yet", modifier = Modifier.padding(8.dp))
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth()
+                                       .padding(horizontal = 8.dp)
+                                       .weight(1f)
+                ) {
+                    items(selectedMarkerReviews) { review ->
+                        androidx.compose.material3.Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("User: ${review.userId}")
+                                Text("Rating: ${"★".repeat(review.rating)}")
+                                Text(review.comment)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
+    // Review Dialog
     if (showReviewDialog && selectedMarker != null) {
         ReviewDialog(
             marker = selectedMarker!!,
             onDismiss = { showReviewDialog = false },
             onConfirm = { comment, rating ->
-                // Create the review object using your data class
                 val newReview = ReviewData(
                     markerId = selectedMarker!!.title,
-                    userId = "Team_Member",
+                    userId = userId,
                     rating = rating,
                     comment = comment,
                     imageUrl = null
                 )
-                // Save it to Firebase using your existing function
                 SaveReviewToFirebase(newReview)
+                fetchReviews(selectedMarker!!.title) // Refresh reviews
             }
         )
     }
@@ -143,13 +233,23 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
 fun HomeScreen(modifier: Modifier = Modifier,
                onUploadClick: () -> Unit
 ) {
+    val user = FirebaseAuth.getInstance().currentUser
+    val displayName = user?.email?.substringBefore(delimiter = "@") ?: "User"
+
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize()
+                           .padding(top = 32.dp, start = 16.dp, end = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        Text(text = "Welcome Home", modifier = Modifier.padding(16.dp))
-        MapViewComposable(modifier = Modifier.fillMaxWidth().height(300.dp))
+        Text(
+            text = "Hello $displayName 👋",
+            fontSize = 22.sp,
+            modifier = Modifier.padding(16.dp)
+        )
+
+        MapViewComposable(modifier = Modifier.fillMaxWidth()
+                                             .weight(1.0f))
 
         Button(
             onClick = onUploadClick,
@@ -157,7 +257,7 @@ fun HomeScreen(modifier: Modifier = Modifier,
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Text("Upload")
+            Text("Register a New Coffee Shop")
         }
     }
 }

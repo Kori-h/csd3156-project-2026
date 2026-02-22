@@ -23,6 +23,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import java.io.File
@@ -33,17 +34,17 @@ fun UploadScreen(
 ) {
     val context = LocalContext.current
 
-    var photoUri by remember { mutableStateOf<Uri?>(null) }
-    var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var photoUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+    var imageBitmap by rememberSaveable { mutableStateOf<Bitmap?>(null) }
+    var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
-    var locationName by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var rating by remember { mutableStateOf(0) }
+    var locationName by rememberSaveable { mutableStateOf("") }
+    var description by rememberSaveable { mutableStateOf("") }
+    var rating by rememberSaveable { mutableStateOf(0) }
 
-    var locationError by remember { mutableStateOf<String?>(null) }
-    var descriptionError by remember { mutableStateOf<String?>(null) }
-    var imageError by remember { mutableStateOf<String?>(null) }
+    var locationError by rememberSaveable { mutableStateOf<String?>(null) }
+    var descriptionError by rememberSaveable { mutableStateOf<String?>(null) }
+    var imageError by rememberSaveable { mutableStateOf<String?>(null) }
 
     val cameraLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
