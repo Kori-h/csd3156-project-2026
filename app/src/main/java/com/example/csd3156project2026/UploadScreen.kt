@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
@@ -46,16 +47,41 @@ fun UploadScreen(
     var descriptionError by rememberSaveable { mutableStateOf<String?>(null) }
     var imageError by rememberSaveable { mutableStateOf<String?>(null) }
 
+    val permissionGranted = ContextCompat.checkSelfPermission(
+        context,
+        android.Manifest.permission.CAMERA
+    ) == PackageManager.PERMISSION_GRANTED
+
     val cameraLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             if (success && photoUri != null) {
                 val stream = context.contentResolver.openInputStream(photoUri!!)
-                imageBitmap = android.graphics.BitmapFactory.decodeStream(stream)
+                if (stream != null) {
+                    imageBitmap = BitmapFactory.decodeStream(stream)
+                    stream.close()
+                } else {
+                    errorMessage = "Failed to load image"
+                }
                 errorMessage = null
             } else {
                 errorMessage = "file not supported"
             }
         }
+
+    fun launchCamera() {
+        val photoFile = File(
+            context.getExternalFilesDir("Pictures"),
+            "photo_${System.currentTimeMillis()}.jpg"
+        )
+
+        photoUri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.provider",
+            photoFile
+        )
+
+        cameraLauncher.launch(photoUri!!)
+    }
 
     val cameraPermissionLauncher =
         rememberLauncherForActivityResult(
@@ -64,7 +90,7 @@ fun UploadScreen(
             if (!isGranted) {
                 errorMessage = "Camera permission denied"
             } else {
-                cameraLauncher.launch(photoUri!!)
+                launchCamera()
             }
         }
 
@@ -137,25 +163,8 @@ fun UploadScreen(
                 if (imageBitmap == null) {
                     Button(onClick = {
 
-                        if (ContextCompat.checkSelfPermission(
-                                context,
-                                android.Manifest.permission.CAMERA
-                            ) == PackageManager.PERMISSION_GRANTED
-                        ) {
-
-                            val photoFile = File(
-                                context.getExternalFilesDir("Pictures"),
-                                "photo_${System.currentTimeMillis()}.jpg"
-                            )
-
-                            photoUri = FileProvider.getUriForFile(
-                                context,
-                                "${context.packageName}.provider",
-                                photoFile
-                            )
-
-                            cameraLauncher.launch(photoUri!!)
-
+                        if (permissionGranted) {
+                            launchCamera()
                         } else {
                             cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
                         }
@@ -254,7 +263,7 @@ fun UploadScreen(
                 Text(text = it, color = Color.Red)
             }
 
-            // ⬇Upload button fixed at bottom
+            // Upload button fixed at bottom
             Button(
                 onClick = {
 
