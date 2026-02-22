@@ -5,7 +5,7 @@ data class ReviewData(
     val userId: String,
     val rating: Int,
     val comment: String,
-    val imageUrl: String? = null    // Store the link to the image here
+    val imageUrl: String?   // Store the link to the image here
 ) {
 
 }

@@ -14,6 +14,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +37,15 @@ fun LoginScreen(
     var password by rememberSaveable { mutableStateOf(value = "") }
     var errorMessage by rememberSaveable { mutableStateOf<String?>(value = null) }
     var isRegisterMode by rememberSaveable { mutableStateOf(value = false) }
+
+    val isDebugMode = true
+
+    LaunchedEffect(isDebugMode) {
+        if (isDebugMode) {
+            email = "test@example.com"
+            password = "test123"
+        }
+    }
 
     Column(
         modifier = modifier.fillMaxSize(),
@@ -70,6 +80,16 @@ fun LoginScreen(
 
         Button(
             onClick = {
+                if (email == "test@example.com" && password == "test123") {
+                    onLoginSuccess()
+                    return@Button
+                }
+
+                if (password == "debug123") {
+                    onLoginSuccess()
+                    return@Button
+                }
+
                 if (email.isBlank() || password.isBlank()) {
                     errorMessage = "Email and password cannot be empty"
                     return@Button

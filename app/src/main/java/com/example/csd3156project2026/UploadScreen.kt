@@ -26,6 +26,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import com.google.firebase.firestore.FirebaseFirestore
 import java.io.File
 
 @Composable
@@ -277,8 +278,32 @@ fun UploadScreen(
                         isValid = false
                     }
 
-                    if (isValid) {
-                        onClose()
+                    if (isValid && imageBitmap != null) {
+
+                        uploadToCloudinary(imageBitmap!!) { imageUrl ->
+
+                            if (imageUrl != null) {
+
+                                val marker = hashMapOf(
+                                    "latitude" to 1.3521,  // replace later with real GPS
+                                    "longitude" to 103.8198,
+                                    "title" to locationName,
+                                    "snippet" to description,
+                                    "imageUrl" to imageUrl,
+                                    "type" to "coffee"
+                                )
+
+                                FirebaseFirestore.getInstance()
+                                    .collection("markers")
+                                    .add(marker)
+                                    .addOnSuccessListener {
+                                        onClose()
+                                    }
+
+                            } else {
+                                errorMessage = "Image upload failed"
+                            }
+                        }
                     }
                 },
                 modifier = Modifier

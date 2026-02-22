@@ -6,7 +6,8 @@ data class MarkerData(
     val latitude: Double,
     val longitude: Double,
     val title: String,
-    val snippet: String
+    val snippet: String,
+    val imageUrl: String? = null
 ) {
     fun toLatLng(): LatLng = LatLng(latitude, longitude)
 }
