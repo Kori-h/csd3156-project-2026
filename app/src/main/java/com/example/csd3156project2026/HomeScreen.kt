@@ -2,7 +2,6 @@ package com.example.csd3156project2026
 
 import android.content.Context
 import android.graphics.Bitmap
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,13 +17,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.android.gms.maps.model.CameraPosition
@@ -39,30 +36,26 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
 import java.io.File
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.delay
 
 data object Home
 
 @Composable
 fun MapViewComposable(modifier: Modifier = Modifier) {
     val db = FirebaseFirestore.getInstance()
-    var firestoreMarkers by rememberSaveable { mutableStateOf(listOf<MarkerData>()) }
-    var selectedMarkerReviews by rememberSaveable { mutableStateOf(listOf<ReviewData>()) }
+
+    var firestoreMarkers by remember { mutableStateOf(listOf<MarkerData>()) }
+    var selectedMarker by remember { mutableStateOf<MarkerData?>(null) }
+    var selectedMarkerReviews by remember { mutableStateOf(listOf<ReviewData>()) }
 
     val collectionPath = "markers"
     val defaultLocation = LatLng(1.3521, 103.8198)
 
-    var showReviewDialog by rememberSaveable { mutableStateOf(false)}
-    var selectedMarker by rememberSaveable { mutableStateOf<MarkerData?>(null) }
+    var selectedMarkerId by rememberSaveable { mutableStateOf<String?>(null) }
+    var showReviewDialog by rememberSaveable { mutableStateOf(false) }
+    var reviewsLoading by rememberSaveable { mutableStateOf(false) }
 
     val user = FirebaseAuth.getInstance().currentUser
     val userId = user?.email?.substringBefore("@") ?: "Anonymous"
-
-    var reviewsLoading by rememberSaveable { mutableStateOf(false) }
-
-    // For drag refresh
-    val scope = rememberCoroutineScope()
-    var dragAmount by remember { mutableStateOf(0f) }
 
     // Function to fetch reviews from Firestore
     fun fetchReviews(markerId: String) {
@@ -108,12 +101,14 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
             }
     }
 
-    // Refresh markers every 30s
+    // Fetch markers once
     LaunchedEffect(Unit) {
-        while (true) {
-            fetchMarkers()
-            delay(30000)
-        }
+        fetchMarkers()
+    }
+
+    // Restore selectedMarker after rotation
+    LaunchedEffect(firestoreMarkers, selectedMarkerId) {
+        selectedMarker = firestoreMarkers.find { it.title == selectedMarkerId }
     }
 
     // Camera focus on first marker or default
@@ -125,6 +120,13 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
     }
 
     Column(modifier = modifier.fillMaxSize()) {
+        //Button(
+        //    onClick = { fetchMarkers() },
+        //    modifier = Modifier.padding(8.dp)
+        //) {
+        //    Text("Refresh")
+        //}
+
         GoogleMap(
             modifier = Modifier.fillMaxWidth()
                                .height(300.dp),
@@ -151,7 +153,7 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
                     onClick = {
                         selectedMarker = marker
                         fetchReviews(marker.title)
-                        true
+                        false
                     }
                 )
             }
@@ -173,9 +175,8 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
 
                 Button(
                     onClick = { showReviewDialog = true },
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .fillMaxWidth()
+                    modifier = Modifier.padding(top = 8.dp)
+                                       .fillMaxWidth()
                 ) {
                     Text("Add Review")
                 }
