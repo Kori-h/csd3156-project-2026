@@ -263,6 +263,26 @@ fun HomeScreen(modifier: Modifier = Modifier,
     }
 }
 
+fun SaveMarkerToFirebase(marker: MarkerData) {
+    val db = FirebaseFirestore.getInstance()
+
+    val markerMap = hashMapOf(
+        "latitude" to marker.latitude,
+        "longitude" to marker.longitude,
+        "title" to marker.title,
+        "snippet" to marker.snippet
+    )
+
+    db.collection("markers")
+        .add(markerMap)
+        .addOnSuccessListener {
+            println("A new coffee marker saved to cloud!")
+        }
+        .addOnFailureListener { e ->
+            println("Error saving marker: $e")
+        }
+}
+
 fun SaveReviewToFirebase(review: ReviewData) {
     val db = FirebaseFirestore.getInstance()
 

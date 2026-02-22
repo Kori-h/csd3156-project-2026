@@ -25,9 +25,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.launch
 import getCurrentLocation
 import java.io.File
 
@@ -36,6 +38,8 @@ fun UploadScreen(
     onClose: () -> Unit
 ) {
     val context = LocalContext.current
+
+    val scope = rememberCoroutineScope()
 
     var photoUri by rememberSaveable { mutableStateOf<Uri?>(null) }
     var imageBitmap by rememberSaveable { mutableStateOf<Bitmap?>(null) }
@@ -300,26 +304,45 @@ fun UploadScreen(
                     }
 
                     if (isValid) {
-                        // Save Image to local storage
-                        val localPath = SaveImageLocally(
-                            context,
-                            imageBitmap!!,
-                            "review_${System.currentTimeMillis()}"
-                        )
 
-                        // Create the Review object
-                        val newReview = ReviewData(
-                            markerId = locationName,    // Link review to the location
-                            userId = "User123",
-                            rating = 5,
-                            comment = description,
-                            imageUrl = localPath        // Path to image on device
-                        )
+                        scope.launch {
+                            val currentLatLng = getCurrentLocation(context)
 
-                        // Save review to Firebase
-                        SaveReviewToFirebase(newReview)
+                            if (currentLatLng != null) {
 
-                        onClose()
+                                // Create and save new marker
+                                val newMarker = MarkerData(
+                                    latitude = currentLatLng.latitude,
+                                    longitude = currentLatLng.longitude,
+                                    title = locationName,
+                                    snippet = description
+                                )
+                                SaveMarkerToFirebase(newMarker)
+
+                                // Save Image to local storage
+                                val localPath = SaveImageLocally(
+                                    context,
+                                    imageBitmap!!,
+                                    "review_${System.currentTimeMillis()}"
+                                )
+
+                                // Create the Review object
+                                val newReview = ReviewData(
+                                    markerId = locationName,    // Link review to the location
+                                    userId = "User123",
+                                    rating = 5,
+                                    comment = description,
+                                    imageUrl = localPath        // Path to image on device
+                                )
+
+                                // Save review to Firebase
+                                SaveReviewToFirebase(newReview)
+
+                                onClose()
+                            } else {
+                                println("Error: Could not retrieve location")
+                            }
+                        }
                     }
                 },
                 modifier = Modifier
