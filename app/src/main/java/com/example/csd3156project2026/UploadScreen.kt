@@ -278,6 +278,25 @@ fun UploadScreen(
                     }
 
                     if (isValid) {
+                        // Save Image to local storage
+                        val localPath = SaveImageLocally(
+                            context,
+                            imageBitmap!!,
+                            "review_${System.currentTimeMillis()}"
+                        )
+
+                        // Create the Review object
+                        val newReview = ReviewData(
+                            markerId = locationName,    // Link review to the location
+                            userId = "User123",
+                            rating = 5,
+                            comment = description,
+                            imageUrl = localPath        // Path to image on device
+                        )
+
+                        // Save review to Firebase
+                        SaveReviewToFirebase(newReview)
+
                         onClose()
                     }
                 },
