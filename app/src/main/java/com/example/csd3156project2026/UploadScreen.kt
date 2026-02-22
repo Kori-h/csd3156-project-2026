@@ -18,15 +18,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.launch
+import getCurrentLocation
 import java.io.File
 
 @Composable
@@ -34,6 +39,8 @@ fun UploadScreen(
     onClose: () -> Unit
 ) {
     val context = LocalContext.current
+
+    val scope = rememberCoroutineScope()
 
     var photoUri by rememberSaveable { mutableStateOf<Uri?>(null) }
     var imageBitmap by rememberSaveable { mutableStateOf<Bitmap?>(null) }
@@ -47,16 +54,41 @@ fun UploadScreen(
     var descriptionError by rememberSaveable { mutableStateOf<String?>(null) }
     var imageError by rememberSaveable { mutableStateOf<String?>(null) }
 
+    val permissionGranted = ContextCompat.checkSelfPermission(
+        context,
+        android.Manifest.permission.CAMERA
+    ) == PackageManager.PERMISSION_GRANTED
+
     val cameraLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             if (success && photoUri != null) {
                 val stream = context.contentResolver.openInputStream(photoUri!!)
-                imageBitmap = android.graphics.BitmapFactory.decodeStream(stream)
+                if (stream != null) {
+                    imageBitmap = BitmapFactory.decodeStream(stream)
+                    stream.close()
+                } else {
+                    errorMessage = "Failed to load image"
+                }
                 errorMessage = null
             } else {
                 errorMessage = "file not supported"
             }
         }
+
+    fun launchCamera() {
+        val photoFile = File(
+            context.getExternalFilesDir("Pictures"),
+            "photo_${System.currentTimeMillis()}.jpg"
+        )
+
+        photoUri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.provider",
+            photoFile
+        )
+
+        cameraLauncher.launch(photoUri!!)
+    }
 
     val cameraPermissionLauncher =
         rememberLauncherForActivityResult(
@@ -65,7 +97,7 @@ fun UploadScreen(
             if (!isGranted) {
                 errorMessage = "Camera permission denied"
             } else {
-                cameraLauncher.launch(photoUri!!)
+                launchCamera()
             }
         }
 
@@ -121,8 +153,19 @@ fun UploadScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            val context = LocalContext.current
+            var location by remember { mutableStateOf<LatLng?>(null) }
+
             // GPS Below Location
-            Text("GPS: 1.3521, 103.8198")
+            LaunchedEffect(Unit) {
+                location = getCurrentLocation(context)
+            }
+
+            Text(
+                text = location?.let {
+                    "GPS: ${it.latitude}, ${it.longitude}"
+                } ?: "Getting location..."
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -138,25 +181,8 @@ fun UploadScreen(
                 if (imageBitmap == null) {
                     Button(onClick = {
 
-                        if (ContextCompat.checkSelfPermission(
-                                context,
-                                android.Manifest.permission.CAMERA
-                            ) == PackageManager.PERMISSION_GRANTED
-                        ) {
-
-                            val photoFile = File(
-                                context.getExternalFilesDir("Pictures"),
-                                "photo_${System.currentTimeMillis()}.jpg"
-                            )
-
-                            photoUri = FileProvider.getUriForFile(
-                                context,
-                                "${context.packageName}.provider",
-                                photoFile
-                            )
-
-                            cameraLauncher.launch(photoUri!!)
-
+                        if (permissionGranted) {
+                            launchCamera()
                         } else {
                             cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
                         }
@@ -255,7 +281,7 @@ fun UploadScreen(
                 Text(text = it, color = Color.Red)
             }
 
-            // ⬇Upload button fixed at bottom
+            // Upload button fixed at bottom
             Button(
                 onClick = {
 
@@ -280,31 +306,42 @@ fun UploadScreen(
 
                     if (isValid && imageBitmap != null) {
 
-                        uploadToCloudinary(imageBitmap!!) { imageUrl ->
+                        scope.launch {
 
-                            if (imageUrl != null) {
+                            val currentLatLng = getCurrentLocation(context)
 
-                                val marker = hashMapOf(
-                                    "latitude" to 1.3521,  // replace later with real GPS
-                                    "longitude" to 103.8198,
-                                    "title" to locationName,
-                                    "snippet" to description,
-                                    "imageUrl" to imageUrl,
-                                    "type" to "coffee"
-                                )
+                            if (currentLatLng != null) {
 
-                                FirebaseFirestore.getInstance()
-                                    .collection("markers")
-                                    .add(marker)
-                                    .addOnSuccessListener {
-                                        onClose()
+                                uploadToCloudinary(imageBitmap!!) { imageUrl ->
+
+                                    if (imageUrl != null) {
+
+                                        val marker = hashMapOf(
+                                            "latitude" to currentLatLng.latitude,
+                                            "longitude" to currentLatLng.longitude,
+                                            "title" to locationName,
+                                            "snippet" to description,
+                                            "imageUrl" to imageUrl,
+                                            "type" to "coffee"
+                                        )
+
+                                        FirebaseFirestore.getInstance()
+                                            .collection("markers")
+                                            .add(marker)
+                                            .addOnSuccessListener {
+                                                onClose()
+                                            }
+
+                                    } else {
+                                        errorMessage = "Image upload failed"
                                     }
+                                }
 
                             } else {
-                                errorMessage = "Image upload failed"
+                                errorMessage = "Could not retrieve GPS location"
                             }
                         }
-                    }
+                    }                    
                 },
                 modifier = Modifier
                     .fillMaxWidth()
