@@ -166,6 +166,7 @@ fun MapViewComposable(
 
             firestoreMarkers = snapshot.documents.map { doc ->
                 MarkerData(
+                    id = doc.id,
                     latitude = doc.getDouble("latitude") ?: 0.0,
                     longitude = doc.getDouble("longitude") ?: 0.0,
                     title = doc.getString("title") ?: "",
@@ -213,17 +214,17 @@ fun MapViewComposable(
             }
         ) {
             firestoreMarkers.forEach { marker ->
-                val markerState = rememberMarkerState(
-                    position = marker.toLatLng()
-                )
+                val markerState = remember(marker.id) {
+                    com.google.maps.android.compose.MarkerState(marker.toLatLng())
+                }
+
                 Marker(
                     state = markerState,
                     title = marker.title,
                     snippet = marker.snippet,
                     anchor = Offset(0.5f, 1.0f),
                     onClick = {
-                        //selectedMarker = marker
-                        fetchReviews(marker.title) { reviews ->
+                        fetchReviews(marker.id) { reviews ->
                             onMarkerSelected(marker, reviews)
                         }
                         true
@@ -343,14 +344,14 @@ fun MapViewComposable(
 //            onDismiss = { showReviewDialog = false },
 //            onConfirm = { comment, rating, imageUrl ->
 //                val newReview = ReviewData(
-//                    markerId = selectedMarker!!.title,
+//                    markerId = selectedMarker!!.id,
 //                    userId = userId,
 //                    rating = rating,
 //                    comment = comment,
 //                    imageUrl = imageUrl
 //                )
 //                SaveReviewToFirebase(newReview)
-//                fetchReviews(selectedMarker!!.title) // Refresh reviews
+//                fetchReviews(selectedMarker!!.id) // Refresh reviews
 //            }
 //        )
 //    }
@@ -554,7 +555,7 @@ fun HomeScreen(modifier: Modifier = Modifier,
             onConfirm = { comment, rating, imageUrl ->
                 val userId = user?.email?.substringBefore("@") ?: "Anonymous"
                 val newReview = ReviewData(
-                    markerId = selectedMarker!!.title,
+                    markerId = selectedMarker!!.id,
                     userId = userId,
                     rating = rating,
                     comment = comment,
@@ -564,7 +565,7 @@ fun HomeScreen(modifier: Modifier = Modifier,
                 // Refresh reviews for this marker
                 val db = FirebaseFirestore.getInstance()
                 db.collection("reviews")
-                    .whereEqualTo("markerId", selectedMarker!!.title)
+                    .whereEqualTo("markerId", selectedMarker!!.id)
                     .get()
                     .addOnSuccessListener { snapshot ->
                         selectedMarkerReviews = snapshot.documents.map { doc ->
@@ -777,7 +778,8 @@ fun SaveMarkerToFirebase(marker: MarkerData) {
         "latitude" to marker.latitude,
         "longitude" to marker.longitude,
         "title" to marker.title,
-        "snippet" to marker.snippet
+        "snippet" to marker.snippet,
+        "imageUrl" to marker.imageUrl
     )
 
     db.collection("markers")
