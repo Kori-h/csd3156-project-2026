@@ -1,5 +1,6 @@
 package com.example.csd3156project2026
 
+import android.Manifest
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -55,6 +56,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.shape.RoundedCornerShape
+import getCurrentLocation
 
 data object Home
 
@@ -68,6 +70,25 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
 
     val collectionPath = "markers"
     val defaultLocation = LatLng(1.3521, 103.8198)
+    var location by remember { mutableStateOf(defaultLocation) }
+    val context = LocalContext.current
+
+    LaunchedEffect(context) {
+        val permissionGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (permissionGranted) {
+            try {
+                location = getCurrentLocation(context) ?: defaultLocation
+            } catch (e: SecurityException) {
+                location = defaultLocation
+            }
+        } else {
+            location = defaultLocation
+        }
+    }
 
     var selectedMarkerId by rememberSaveable { mutableStateOf<String?>(null) }
     var showReviewDialog by rememberSaveable { mutableStateOf(false) }
@@ -134,7 +155,7 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
     // Camera focus on first marker or default
     val cameraPositionState: CameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(
-            firestoreMarkers.firstOrNull()?.toLatLng() ?: defaultLocation,
+            firestoreMarkers.firstOrNull()?.toLatLng() ?: location,
             12f
         )
     }
