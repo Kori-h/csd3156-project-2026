@@ -1,5 +1,6 @@
 package com.example.csd3156project2026
 
+import android.Manifest
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -67,6 +68,18 @@ fun UploadScreen(
     val permissionGranted = ContextCompat.checkSelfPermission(
         context, android.Manifest.permission.CAMERA
     ) == PackageManager.PERMISSION_GRANTED
+
+    // fetch current location
+    LaunchedEffect(context) {
+        val permissionGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (permissionGranted) {
+            location = getCurrentLocation(context)
+        }
+    }
 
     val cameraLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
@@ -196,7 +209,7 @@ fun UploadScreen(
         ) {
 
             // --- Location ---
-            Text("Location:", color = NavBrown, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+            Text("Location Name:", color = NavBrown, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
             OutlinedTextField(
                 value = locationName,
                 onValueChange = { locationName = it; locationError = null },
@@ -305,20 +318,20 @@ fun UploadScreen(
             }
 
             // --- Rating ---
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Rating: ", color = NavBrown, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-                Spacer(modifier = Modifier.width(8.dp))
-                for (i in 1..5) {
-                    Text(
-                        text = "★",
-                        fontSize = 28.sp,
-                        color = if (i <= rating) StarYellow else WhiteText.copy(alpha = 0.3f),
-                        modifier = Modifier
-                            .padding(end = 4.dp)
-                            .clickable { rating = i }
-                    )
-                }
-            }
+            //Row(verticalAlignment = Alignment.CenterVertically) {
+            //    Text("Rating: ", color = NavBrown, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+            //    Spacer(modifier = Modifier.width(8.dp))
+            //    for (i in 1..5) {
+            //        Text(
+            //            text = "★",
+            //            fontSize = 28.sp,
+            //            color = if (i <= rating) StarYellow else WhiteText.copy(alpha = 0.3f),
+            //            modifier = Modifier
+            //                .padding(end = 4.dp)
+            //                .clickable { rating = i }
+            //        )
+            //    }
+            //}
 
             // desc
             Text("Description:", color = NavBrown, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)

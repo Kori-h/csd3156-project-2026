@@ -301,27 +301,27 @@ fun JournalScreen(
         }
 
         // add new coffee shop
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(bottom = 16.dp),
-            contentAlignment = Alignment.BottomCenter
-        ) {
-            Button(
-                onClick = { onUploadClick() },
-                colors = ButtonDefaults.buttonColors(containerColor = ButtonBrown),
-                shape = RoundedCornerShape(24.dp),
-                modifier = Modifier.padding(horizontal = 32.dp)
-            ) {
-                Text(
-                    text = "Add New Entry",
-                    color = WhiteText,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 15.sp
-                )
-            }
-        }
+        //Box(
+        //    modifier = Modifier
+        //        .fillMaxSize()
+        //        .padding(paddingValues)
+        //        .padding(bottom = 16.dp),
+        //    contentAlignment = Alignment.BottomCenter
+        //) {
+        //    Button(
+        //        onClick = { onUploadClick() },
+        //        colors = ButtonDefaults.buttonColors(containerColor = ButtonBrown),
+        //        shape = RoundedCornerShape(24.dp),
+        //        modifier = Modifier.padding(horizontal = 32.dp)
+        //    ) {
+        //        Text(
+        //            text = "Add New Entry",
+        //            color = WhiteText,
+        //            fontWeight = FontWeight.SemiBold,
+        //            fontSize = 15.sp
+        //        )
+        //    }
+        //}
     }
 }
 

@@ -85,7 +85,9 @@ import com.example.csd3156project2026.ui.theme.MainBrown
 import com.example.csd3156project2026.ui.theme.NavBrown
 import com.example.csd3156project2026.ui.theme.StarYellow
 import com.example.csd3156project2026.ui.theme.WhiteText
+import com.google.android.gms.maps.CameraUpdateFactory
 import getCurrentLocation
+import kotlinx.coroutines.launch
 
 data object Home
 
@@ -105,7 +107,7 @@ fun MapViewComposable(
     var location by remember { mutableStateOf(defaultLocation) }
     val context = LocalContext.current
 
-    LaunchedEffect(context) {
+    suspend fun fetchGPSLocation() {
         val permissionGranted = ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.ACCESS_FINE_LOCATION
@@ -176,11 +178,6 @@ fun MapViewComposable(
             }
     }
 
-    // Fetch markers once
-    LaunchedEffect(Unit) {
-        fetchMarkers()
-    }
-
     // Restore selectedMarker after rotation
     //LaunchedEffect(firestoreMarkers, selectedMarkerId) {
     //    selectedMarker = firestoreMarkers.find { it.title == selectedMarkerId }
@@ -194,14 +191,14 @@ fun MapViewComposable(
         )
     }
 
+    LaunchedEffect(context) {
+        fetchMarkers()
+        fetchGPSLocation()
+        cameraPositionState.animate(
+            update = CameraUpdateFactory.newLatLngZoom(location, 15f)
+        )
+    }
     Box(modifier = modifier.fillMaxSize()) {
-        //Button(
-        //    onClick = { fetchMarkers() },
-        //    modifier = Modifier.padding(8.dp)
-        //) {
-        //    Text("Refresh")
-        //}
-
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
@@ -233,6 +230,32 @@ fun MapViewComposable(
                     }
                 )
             }
+        }
+
+        val scope = rememberCoroutineScope()
+        Button(
+            onClick = {
+                scope.launch {
+                    fetchMarkers()
+                    fetchGPSLocation()
+                    cameraPositionState.animate(
+                        update = CameraUpdateFactory.newLatLngZoom(location, 15f)
+                    )
+                }
+            },
+            modifier = Modifier.align(Alignment.TopEnd)
+                               .padding(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = ButtonBrown
+            ),
+            shape = RoundedCornerShape(20.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Refresh,
+                contentDescription = "Refresh",
+                tint = WhiteText,
+                modifier = Modifier.size(18.dp)
+            )
         }
 
         // Debug Text
@@ -482,7 +505,7 @@ fun HomeScreen(modifier: Modifier = Modifier,
                 onClick = onUploadClick,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
+                    .width(300.dp)
                     .padding(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = ButtonBrown
