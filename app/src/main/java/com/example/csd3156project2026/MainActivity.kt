@@ -136,7 +136,8 @@ fun NavLogic(modifier: Modifier = Modifier) {
                     JournalScreen(
                         modifier = Modifier.fillMaxSize(),
                         onHomeClick = { backStack.removeLastOrNull() },
-                        onProfileClick = { backStack.add(Profile) }
+                        onProfileClick = { backStack.add(Profile) },
+                        onUploadClick = { backStack.add(Upload) }
                     )
                 }
 

@@ -7,8 +7,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -36,15 +34,18 @@ data class JournalEntry(
 fun JournalScreen(
     modifier: Modifier = Modifier,
     onHomeClick: () -> Unit,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    onUploadClick: () -> Unit
 ) {
     val user = FirebaseAuth.getInstance().currentUser
     val userId = user?.email?.substringBefore("@") ?: "Anonymous"
 
+    var starFilter by rememberSaveable { mutableStateOf<Int?>(null) }
+    var showFilterDropdown by rememberSaveable { mutableStateOf(false) }
+
     var journalEntries by remember { mutableStateOf(listOf<JournalEntry>()) }
     var isLoading by remember { mutableStateOf(true) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
-    var selectedTab by rememberSaveable { mutableStateOf(1) } // Journal is tab 1
 
     val db = FirebaseFirestore.getInstance()
 
@@ -77,6 +78,7 @@ fun JournalScreen(
                             markerSnippet = markerMap[review.markerId] ?: ""
                         )
                     }
+
                     isLoading = false
                 }.addOnFailureListener {
                     journalEntries = reviews.map { JournalEntry(review = it, markerTitle = it.markerId) }
@@ -89,9 +91,11 @@ fun JournalScreen(
     }
 
     val filteredEntries = journalEntries.filter { entry ->
-        searchQuery.isEmpty() ||
+        val matchesSearch = searchQuery.isEmpty() ||
                 entry.markerTitle.contains(searchQuery, ignoreCase = true) ||
                 entry.review.comment.contains(searchQuery, ignoreCase = true)
+        val matchesStar = starFilter == null || entry.review.rating == starFilter
+        matchesSearch && matchesStar
     }
 
     Scaffold(
@@ -202,30 +206,68 @@ fun JournalScreen(
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Search Bar
+            // search bar
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text("Search Entries", fontSize = 16.sp) },
-                trailingIcon = {
+                placeholder = { Text("Search Entries", fontSize = 16.sp, color = NavBrown.copy(alpha = 0.4f)) },
+                leadingIcon = {
                     Icon(
-                        imageVector = Icons.Filled.Menu,
-                        contentDescription = "Filter",
-                        tint = WhiteText
+                        imageVector = Icons.Filled.Search,
+                        contentDescription = "Search",
+                        tint = MainBrown.copy(alpha = 0.5f)
                     )
+                },
+                trailingIcon = {
+                    Box {
+                        Icon(
+                            imageVector = Icons.Filled.Menu,
+                            contentDescription = "Filter",
+                            tint = MainBrown.copy(alpha = 0.7f),
+                            modifier = Modifier.clickable { showFilterDropdown = true }
+                        )
+                        DropdownMenu(
+                            expanded = showFilterDropdown,
+                            onDismissRequest = { showFilterDropdown = false },
+                            modifier = Modifier.background(WhiteText)
+                        ) {
+                            // "all" option
+                            DropdownMenuItem(
+                                text = { Text("All", color = NavBrown) },
+                                onClick = { starFilter = null; showFilterDropdown = false }
+                            )
+                            // star options
+                            (5 downTo 1).forEach { stars ->
+                                val capturedStars = stars
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            repeat(capturedStars) {
+                                                Text("★", fontSize = 16.sp, color = StarYellow)
+                                            }
+                                            repeat(5 - capturedStars) {
+                                                Text("☆", fontSize = 16.sp, color = StarYellow)
+                                            }
+                                        }
+                                    },
+                                    onClick = { starFilter = capturedStars; showFilterDropdown = false }
+                                )
+                            }
+                        }
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = CardBrown,
-                    unfocusedBorderColor = CardBrown,
-                    focusedContainerColor = CardBrown,
-                    unfocusedContainerColor = CardBrown,
-                    focusedTextColor = WhiteText,
-                    unfocusedTextColor = WhiteText,
-                    cursorColor = WhiteText
+                    focusedBorderColor = androidx.compose.ui.graphics.Color.White,
+                    unfocusedBorderColor = androidx.compose.ui.graphics.Color.White,
+                    focusedContainerColor = androidx.compose.ui.graphics.Color.White,
+                    unfocusedContainerColor = androidx.compose.ui.graphics.Color.White,
+                    focusedTextColor = MainBrown,
+                    unfocusedTextColor = MainBrown,
+                    cursorColor = MainBrown
                 ),
                 singleLine = true
             )
@@ -241,7 +283,7 @@ fun JournalScreen(
                     Text(
                         text = if (searchQuery.isEmpty()) "No entries yet.\nStart reviewing coffee shops!"
                         else "No results for \"$searchQuery\"",
-                        color = WhiteText.copy(alpha = 0.6f),
+                        color = NavBrown.copy(alpha = 0.6f),
                         fontSize = 16.sp,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
@@ -258,7 +300,7 @@ fun JournalScreen(
             }
         }
 
-        // Floating "Add New Entry" button overlay
+        // add new coffee shop
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -267,7 +309,7 @@ fun JournalScreen(
             contentAlignment = Alignment.BottomCenter
         ) {
             Button(
-                onClick = { /* navigate to add review / upload */ },
+                onClick = { onUploadClick() },
                 colors = ButtonDefaults.buttonColors(containerColor = ButtonBrown),
                 shape = RoundedCornerShape(24.dp),
                 modifier = Modifier.padding(horizontal = 32.dp)
@@ -334,7 +376,7 @@ fun JournalEntryCard(entry: JournalEntry) {
                 ) {
                     Text(
                         text = entry.markerTitle,
-                        color = WhiteText,
+                        color = NavBrown,
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         maxLines = 1,
@@ -345,27 +387,25 @@ fun JournalEntryCard(entry: JournalEntry) {
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Star rating
+                // star rating
                 Row {
-                    repeat(5) { index ->
-                        Icon(
-                            imageVector = if (index < entry.review.rating)
-                                Icons.Filled.Star
-                            else
-                                Icons.Outlined.Star,
-                            contentDescription = null,
-                            tint = StarYellow,
-                            modifier = Modifier.size(16.dp)
-                        )
+                    Row {
+                        repeat(5) { index ->
+                            Text(
+                                text = if (index < entry.review.rating) "★" else "☆",
+                                fontSize = 16.sp,
+                                color = StarYellow
+                            )
+                        }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Comment preview
+                // comment preview
                 Text(
                     text = entry.review.comment.ifEmpty { entry.markerSnippet },
-                    color = WhiteText.copy(alpha = 0.75f),
+                    color = NavBrown.copy(alpha = 0.75f),
                     fontSize = 12.sp,
                     maxLines = 4,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
