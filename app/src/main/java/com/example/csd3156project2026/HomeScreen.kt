@@ -53,37 +53,75 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import com.example.csd3156project2026.ui.theme.ButtonBrown
+import com.example.csd3156project2026.ui.theme.CardBrown
+import com.example.csd3156project2026.ui.theme.CreamText
+import com.example.csd3156project2026.ui.theme.MainBrown
+import com.example.csd3156project2026.ui.theme.NavBrown
+import com.example.csd3156project2026.ui.theme.StarYellow
+import com.example.csd3156project2026.ui.theme.WhiteText
 
 data object Home
 
 @Composable
-fun MapViewComposable(modifier: Modifier = Modifier) {
+fun MapViewComposable(
+    modifier: Modifier = Modifier,
+    onMarkerSelected: (MarkerData, List<ReviewData>) -> Unit
+) {
     val db = FirebaseFirestore.getInstance()
 
     var firestoreMarkers by remember { mutableStateOf(listOf<MarkerData>()) }
-    var selectedMarker by remember { mutableStateOf<MarkerData?>(null) }
-    var selectedMarkerReviews by remember { mutableStateOf(listOf<ReviewData>()) }
+    //var selectedMarker by remember { mutableStateOf<MarkerData?>(null) }
+    //var selectedMarkerReviews by remember { mutableStateOf(listOf<ReviewData>()) }
 
     val collectionPath = "markers"
     val defaultLocation = LatLng(1.3521, 103.8198)
 
-    var selectedMarkerId by rememberSaveable { mutableStateOf<String?>(null) }
-    var showReviewDialog by rememberSaveable { mutableStateOf(false) }
+    //var selectedMarkerId by rememberSaveable { mutableStateOf<String?>(null) }
+    //var showReviewDialog by rememberSaveable { mutableStateOf(false) }
     var reviewsLoading by rememberSaveable { mutableStateOf(false) }
 
     val user = FirebaseAuth.getInstance().currentUser
     val userId = user?.email?.substringBefore("@") ?: "Anonymous"
 
     // Function to fetch reviews from Firestore
-    fun fetchReviews(markerId: String) {
+    fun fetchReviews(markerId: String, onResult: (List<ReviewData>) -> Unit) {
         reviewsLoading = true
         db.collection("reviews")
             .whereEqualTo("markerId", markerId)
             .get()
             .addOnSuccessListener { snapshot ->
-                selectedMarkerReviews = snapshot.documents.map { doc ->
+                val reviews = snapshot.documents.map { doc ->
                     ReviewData(
                         markerId = doc.getString("markerId") ?: "",
                         userId = doc.getString("userId") ?: "",
@@ -93,11 +131,13 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
                     )
                 }
                 reviewsLoading = false
+                onResult(reviews)
             }
             .addOnFailureListener {
                 it.printStackTrace()
-                selectedMarkerReviews = emptyList()
+                //selectedMarkerReviews = emptyList()
                 reviewsLoading = false
+                onResult(emptyList())
             }
     }
 
@@ -127,9 +167,9 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
     }
 
     // Restore selectedMarker after rotation
-    LaunchedEffect(firestoreMarkers, selectedMarkerId) {
-        selectedMarker = firestoreMarkers.find { it.title == selectedMarkerId }
-    }
+    //LaunchedEffect(firestoreMarkers, selectedMarkerId) {
+    //    selectedMarker = firestoreMarkers.find { it.title == selectedMarkerId }
+    //}
 
     // Camera focus on first marker or default
     val cameraPositionState: CameraPositionState = rememberCameraPositionState {
@@ -139,7 +179,7 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
         )
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
         //Button(
         //    onClick = { fetchMarkers() },
         //    modifier = Modifier.padding(8.dp)
@@ -148,8 +188,7 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
         //}
 
         GoogleMap(
-            modifier = Modifier.fillMaxWidth()
-                               .height(300.dp),
+            modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             properties = MapProperties(isMyLocationEnabled = false),
             uiSettings = MapUiSettings(
@@ -157,8 +196,8 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
                 myLocationButtonEnabled = false
             ),
             onMapClick = { latLng ->
-                selectedMarker = null
-                selectedMarkerReviews = emptyList()
+                //selectedMarker = null
+                //selectedMarkerReviews = emptyList()
             }
         ) {
             firestoreMarkers.forEach { marker ->
@@ -171,9 +210,11 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
                     snippet = marker.snippet,
                     anchor = Offset(0.5f, 1.0f),
                     onClick = {
-                        selectedMarker = marker
-                        fetchReviews(marker.title)
-                        false
+                        //selectedMarker = marker
+                        fetchReviews(marker.title) { reviews ->
+                            onMarkerSelected(marker, reviews)
+                        }
+                        true
                     }
                 )
             }
@@ -187,73 +228,279 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
         //    )
         //}
 
-        selectedMarker?.let { marker ->
-            Column(modifier = Modifier.fillMaxWidth()
-                                      .padding(8.dp)) {
-                marker.imageUrl?.let { url ->
-                    AsyncImage(
-                        model = url,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(180.dp)
-                    )
-                }
+//        selectedMarker?.let { marker ->
+//            Column(modifier = Modifier.fillMaxWidth()
+//                                      .padding(8.dp)) {
+//                marker.imageUrl?.let { url ->
+//                    AsyncImage(
+//                        model = url,
+//                        contentDescription = null,
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .height(180.dp)
+//                    )
+//                }
+//
+//                Text(marker.title, fontSize = 18.sp)
+//                Text(marker.snippet, fontSize = 14.sp, color = androidx.compose.ui.graphics.Color.Gray)
+//
+//                Button(
+//                    onClick = { showReviewDialog = true },
+//                    modifier = Modifier.padding(top = 8.dp)
+//                                       .fillMaxWidth()
+//                ) {
+//                    Text("Add Review")
+//                }
+//            }
+//
+//            if (reviewsLoading) {
+//                Text("Loading reviews...", modifier = Modifier.padding(8.dp))
+//            } else if (selectedMarkerReviews.isEmpty()) {
+//                Text("No reviews yet", modifier = Modifier.padding(8.dp))
+//            } else {
+//                LazyColumn(
+//                    modifier = Modifier.fillMaxWidth()
+//                                       .padding(horizontal = 8.dp)
+//                                       .weight(1f)
+//                ) {
+//                    items(selectedMarkerReviews) { review ->
+//                        androidx.compose.material3.Card(
+//                            modifier = Modifier
+//                                .fillMaxWidth()
+//                                .padding(vertical = 6.dp)
+//                        ) {
+//                            Column(modifier = Modifier.padding(12.dp)) {
+//
+//                                Text("User: ${review.userId}")
+//                                Text("Rating: ${"★".repeat(review.rating)}")
+//
+//                                Spacer(modifier = Modifier.height(6.dp))
+//
+//                                Text(review.comment)
+//
+//                                // SHOW IMAGE IF EXISTS
+//                                review.imageUrl?.let { url ->
+//                                    Spacer(modifier = Modifier.height(8.dp))
+//
+//                                    AsyncImage(
+//                                        model = url,
+//                                        contentDescription = "Review Image",
+//                                        modifier = Modifier
+//                                            .fillMaxWidth()
+//                                            .height(180.dp)
+//                                    )
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+    }
 
-                Text(marker.title, fontSize = 18.sp)
-                Text(marker.snippet, fontSize = 14.sp, color = androidx.compose.ui.graphics.Color.Gray)
+    // Review Dialog
+//    if (showReviewDialog && selectedMarker != null) {
+//        ReviewDialog(
+//            marker = selectedMarker!!,
+//            onDismiss = { showReviewDialog = false },
+//            onConfirm = { comment, rating, imageUrl ->
+//                val newReview = ReviewData(
+//                    markerId = selectedMarker!!.title,
+//                    userId = userId,
+//                    rating = rating,
+//                    comment = comment,
+//                    imageUrl = imageUrl
+//                )
+//                SaveReviewToFirebase(newReview)
+//                fetchReviews(selectedMarker!!.title) // Refresh reviews
+//            }
+//        )
+//    }
+}
 
-                Button(
-                    onClick = { showReviewDialog = true },
-                    modifier = Modifier.padding(top = 8.dp)
-                                       .fillMaxWidth()
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreen(modifier: Modifier = Modifier,
+               onUploadClick: () -> Unit,
+               onJournalClick: () -> Unit,
+               onProfileClick: () -> Unit
+) {
+    val user = FirebaseAuth.getInstance().currentUser
+    val displayName = user?.email?.substringBefore(delimiter = "@") ?: "User"
+
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var selectedMarker by remember { mutableStateOf<MarkerData?>(null) }
+    var selectedMarkerReviews by remember { mutableStateOf(listOf<ReviewData>()) }
+    var selectedTab by rememberSaveable { mutableStateOf(0) }
+
+    val scope = rememberCoroutineScope()
+
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    var showBottomSheet by remember { mutableStateOf(false) }
+    var showReviewDialog by remember { mutableStateOf(false) }
+
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = MainBrown,
+        contentWindowInsets = WindowInsets(0),
+        topBar = {
+            TopAppBar(
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Hello $displayName 👋",
+                            color = WhiteText,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+
+                        Image(
+                            painter = painterResource(id = R.drawable.logo),
+                            contentDescription = "Logo",
+                            modifier = Modifier.size(80.dp)
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = NavBrown,
+                    titleContentColor = WhiteText
+                )
+            )
+        },
+        bottomBar = {
+            BottomAppBar(
+                containerColor = NavBrown,
+                contentColor = WhiteText
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Text("Add Review")
-                }
-            }
-
-            if (reviewsLoading) {
-                Text("Loading reviews...", modifier = Modifier.padding(8.dp))
-            } else if (selectedMarkerReviews.isEmpty()) {
-                Text("No reviews yet", modifier = Modifier.padding(8.dp))
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth()
-                                       .padding(horizontal = 8.dp)
-                                       .weight(1f)
-                ) {
-                    items(selectedMarkerReviews) { review ->
-                        androidx.compose.material3.Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 6.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-
-                                Text("User: ${review.userId}")
-                                Text("Rating: ${"★".repeat(review.rating)}")
-
-                                Spacer(modifier = Modifier.height(6.dp))
-
-                                Text(review.comment)
-
-                                // SHOW IMAGE IF EXISTS
-                                review.imageUrl?.let { url ->
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    AsyncImage(
-                                        model = url,
-                                        contentDescription = "Review Image",
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(180.dp)
-                                    )
-                                }
-                            }
+                    // home
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable {
+                            selectedTab = 0
                         }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Home,
+                            contentDescription = "Home",
+                            tint = CreamText,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            text = "Home",
+                            color = CreamText,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    // journal
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable {
+                            selectedTab = 1
+                            onJournalClick()
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.List,
+                            contentDescription = "Journal",
+                            tint = CardBrown,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            text = "Journal",
+                            color = CardBrown,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    // profile
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable {
+                            selectedTab = 2
+                            onProfileClick()
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Person,
+                            contentDescription = "Profile",
+                            tint = CardBrown,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            text = "Profile",
+                            color = CardBrown,
+                            fontSize = 12.sp
+                        )
                     }
                 }
             }
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            // Map now takes full screen
+            MapViewComposable(
+                modifier = Modifier.fillMaxSize(),
+                onMarkerSelected = { marker, reviews ->
+                    selectedMarker = marker
+                    selectedMarkerReviews = reviews
+                    showBottomSheet = true
+                }
+            )
+
+            // "Register a New Coffee Shop" button overlay at bottom
+            Button(
+                onClick = onUploadClick,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ButtonBrown
+                )
+            ) {
+                Text("Register a New Coffee Shop")
+            }
+        }
+    }
+
+    // Bottom Sheet for selected location
+    if (showBottomSheet && selectedMarker != null) {
+        ModalBottomSheet(
+            onDismissRequest = { showBottomSheet = false },
+            sheetState = sheetState,
+            containerColor = CardBrown,
+            contentColor = WhiteText,
+            dragHandle = {
+                Box(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .width(40.dp)
+                        .height(4.dp)
+                        .background(WhiteText.copy(alpha = 0.5f), RoundedCornerShape(2.dp))
+                )
+            }
+        ) {
+            LocationBottomSheetContent(
+                marker = selectedMarker!!,
+                reviews = selectedMarkerReviews,
+                onAddReviewClick = {
+                    showBottomSheet = false
+                    showReviewDialog = true
+                }
+            )
         }
     }
 
@@ -263,6 +510,7 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
             marker = selectedMarker!!,
             onDismiss = { showReviewDialog = false },
             onConfirm = { comment, rating, imageUrl ->
+                val userId = user?.email?.substringBefore("@") ?: "Anonymous"
                 val newReview = ReviewData(
                     markerId = selectedMarker!!.title,
                     userId = userId,
@@ -271,41 +519,201 @@ fun MapViewComposable(modifier: Modifier = Modifier) {
                     imageUrl = imageUrl
                 )
                 SaveReviewToFirebase(newReview)
-                fetchReviews(selectedMarker!!.title) // Refresh reviews
+                // Refresh reviews for this marker
+                val db = FirebaseFirestore.getInstance()
+                db.collection("reviews")
+                    .whereEqualTo("markerId", selectedMarker!!.title)
+                    .get()
+                    .addOnSuccessListener { snapshot ->
+                        selectedMarkerReviews = snapshot.documents.map { doc ->
+                            ReviewData(
+                                markerId = doc.getString("markerId") ?: "",
+                                userId = doc.getString("userId") ?: "",
+                                rating = doc.getLong("rating")?.toInt() ?: 0,
+                                comment = doc.getString("comment") ?: "",
+                                imageUrl = doc.getString("imageUrl")
+                            )
+                        }
+                    }
+                showReviewDialog = false
+                showBottomSheet = true
             }
         )
     }
 }
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier,
-               onUploadClick: () -> Unit
+fun LocationBottomSheetContent(
+    marker: MarkerData,
+    reviews: List<ReviewData>,
+    onAddReviewClick: () -> Unit
 ) {
-    val user = FirebaseAuth.getInstance().currentUser
-    val displayName = user?.email?.substringBefore(delimiter = "@") ?: "User"
-
     Column(
-        modifier = modifier.fillMaxSize()
-                           .padding(top = 32.dp, start = 16.dp, end = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
     ) {
+        // Location Header
         Text(
-            text = "Hello $displayName 👋",
+            text = marker.title,
             fontSize = 22.sp,
-            modifier = Modifier.padding(16.dp)
+            fontWeight = FontWeight.Bold,
+            color = WhiteText
         )
 
-        MapViewComposable(modifier = Modifier.fillMaxWidth()
-                                             .weight(1.0f))
+        Spacer(modifier = Modifier.height(4.dp))
 
-        Button(
-            onClick = onUploadClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+        Text(
+            text = marker.snippet,
+            fontSize = 14.sp,
+            color = WhiteText.copy(alpha = 0.8f)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // avg rating
+        val totalStars = reviews.sumOf { it.rating }
+        val avgRating = if (reviews.isNotEmpty()) totalStars.toDouble() / reviews.size else 0.0
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            repeat(5) { index ->
+                Icon(
+                    imageVector = if (index + 1 <= avgRating)
+                        Icons.Filled.Star
+                    else
+                        Icons.Outlined.Star,
+                    contentDescription = null,
+                    tint = StarYellow,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text(
+                text = String.format("%.1f (${reviews.size})", avgRating),
+                color = WhiteText.copy(alpha = 0.7f),
+                fontSize = 14.sp
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // review header w add button
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Register a New Coffee Shop")
+            Text(
+                text = "Reviews",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = WhiteText
+            )
+
+            Button(
+                onClick = onAddReviewClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ButtonBrown
+                ),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Text(
+                    text = "Add Review",
+                    color = WhiteText,
+                    fontSize = 12.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Reviews List
+        if (reviews.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No reviews yet. Be the first to review!",
+                    color = WhiteText.copy(alpha = 0.6f)
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp)
+            ) {
+                items(reviews) { review ->
+                    ReviewCard(review = review)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ReviewCard(review: ReviewData) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = CardBrown.copy(alpha = 0.8f)
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = review.userId,
+                    color = WhiteText,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+
+                Row {
+                    repeat(review.rating) {
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = null,
+                            tint = StarYellow,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = review.comment,
+                color = WhiteText,
+                fontSize = 14.sp
+            )
+
+            review.imageUrl?.let { url ->
+                Spacer(modifier = Modifier.height(8.dp))
+                AsyncImage(
+                    model = url,
+                    contentDescription = "Review Image",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            }
         }
     }
 }

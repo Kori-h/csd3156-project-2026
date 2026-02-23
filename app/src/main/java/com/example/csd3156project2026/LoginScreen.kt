@@ -1,5 +1,6 @@
 package com.example.csd3156project2026
 
+import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,21 +11,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.sp
+import com.example.csd3156project2026.ui.theme.ButtonBrown
+import com.example.csd3156project2026.ui.theme.WhiteText
 
 data object Login
 
@@ -47,99 +53,140 @@ fun LoginScreen(
         }
     }
 
-    Column(
-        modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    Box(
+        modifier = Modifier.fillMaxSize()
     ) {
-        Text(
-            text = "Welcome to the Coffee App",
-            modifier = Modifier
-                .padding(bottom = 24.dp),
-            fontSize = 28.sp
+        Image(
+            painter = painterResource(id = R.drawable.logo_bg),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
         )
 
-        Spacer(modifier = Modifier.height(height = 16.dp))
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text(text = "Email") }
-        )
-
-        Spacer(modifier = Modifier.height(height = 12.dp))
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text(text = "Password") },
-            visualTransformation = PasswordVisualTransformation()
-        )
-
-        Spacer(modifier = Modifier.height(height = 16.dp))
-
-        Button(
-            onClick = {
-                if (email == "test@example.com" && password == "test123") {
-                    onLoginSuccess()
-                    return@Button
-                }
-
-                if (password == "debug123") {
-                    onLoginSuccess()
-                    return@Button
-                }
-
-                if (email.isBlank() || password.isBlank()) {
-                    errorMessage = "Email and password cannot be empty"
-                    return@Button
-                }
-
-                if (isRegisterMode) {
-                    FirebaseAuth.register(email, password) { success, error ->
-                        if (success) {
-                            onLoginSuccess()
-                        } else {
-                            errorMessage = error
-                        }
-                    }
-                } else {
-                    FirebaseAuth.login(email, password) { success, error ->
-                        if (success) {
-                            onLoginSuccess()
-                        } else {
-                            errorMessage = error
-                        }
-                    }
-                }
-            }
-        ) {
-            Text(text = if (isRegisterMode) "Register" else "Login")
-        }
-
-        Spacer(modifier = Modifier.height(height = 8.dp))
-
-        TextButton(
-            onClick = { isRegisterMode = !isRegisterMode }
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = if (isRegisterMode)
-                    "Already have an account? Login"
-                else
-                    "No account? Register"
+                text = "Welcome",
+                modifier = Modifier
+                    .padding(bottom = 24.dp),
+                fontSize = 28.sp,
+                color = WhiteText
             )
-        }
 
-        Box(
-            modifier = Modifier.fillMaxWidth()
-                               .height(40.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            errorMessage?.let {
-                Text(
-                    text = it,
-                    color = Color.Red
+            Spacer(modifier = Modifier.height(height = 16.dp))
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text(text = "Email", color = WhiteText) },
+                textStyle = androidx.compose.ui.text.TextStyle(color = WhiteText),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = WhiteText,
+                    unfocusedBorderColor = WhiteText.copy(alpha = 0.5f),
+                    focusedLabelColor = WhiteText,
+                    unfocusedLabelColor = WhiteText.copy(alpha = 0.7f),
+                    cursorColor = WhiteText
                 )
+            )
+
+            Spacer(modifier = Modifier.height(height = 12.dp))
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text(text = "Password", color = WhiteText) },
+                textStyle = androidx.compose.ui.text.TextStyle(color = WhiteText),
+                visualTransformation = PasswordVisualTransformation(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = WhiteText,
+                    unfocusedBorderColor = WhiteText.copy(alpha = 0.5f),
+                    focusedLabelColor = WhiteText,
+                    unfocusedLabelColor = WhiteText.copy(alpha = 0.7f),
+                    cursorColor = WhiteText
+                )
+            )
+
+            Spacer(modifier = Modifier.height(height = 16.dp))
+
+            Button(
+                onClick = {
+                    if (email == "test@example.com" && password == "test123") {
+                        onLoginSuccess()
+                        return@Button
+                    }
+
+                    if (password == "debug123") {
+                        onLoginSuccess()
+                        return@Button
+                    }
+
+                    if (email.isBlank() || password.isBlank()) {
+                        errorMessage = "Email and password cannot be empty"
+                        return@Button
+                    }
+
+                    if (isRegisterMode) {
+                        FirebaseAuth.register(email, password) { success, error ->
+                            if (success) {
+                                onLoginSuccess()
+                            } else {
+                                errorMessage = error
+                            }
+                        }
+                    } else {
+                        FirebaseAuth.login(email, password) { success, error ->
+                            if (success) {
+                                onLoginSuccess()
+                            } else {
+                                errorMessage = error
+                            }
+                        }
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ButtonBrown,
+                    contentColor = WhiteText
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+            ) {
+                Text(text = if (isRegisterMode) "Register" else "Login")
+            }
+
+            Spacer(modifier = Modifier.height(height = 8.dp))
+
+            TextButton(
+                onClick = { isRegisterMode = !isRegisterMode },
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = WhiteText
+                )
+            ) {
+                Text(
+                    text = if (isRegisterMode)
+                        "Already have an account? Login"
+                    else
+                        "No account? Register"
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(40.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                errorMessage?.let {
+                    Text(
+                        text = it,
+                        color = Color.Red
+                    )
+                }
             }
         }
     }

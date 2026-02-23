@@ -56,3 +56,18 @@ fun Csd3156project2026Theme(
         content = content
     )
 }
+
+@Composable
+fun BrewViewTheme(content: @Composable () -> Unit) {
+
+    val colorScheme = lightColorScheme(
+        primary = NavBrown,
+        onPrimary = WhiteText
+    )
+
+    MaterialTheme(
+        colorScheme = colorScheme,
+        typography = Typography,
+        content = content
+    )
+}
