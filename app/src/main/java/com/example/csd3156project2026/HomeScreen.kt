@@ -88,6 +88,7 @@ import com.example.csd3156project2026.ui.theme.WhiteText
 import com.google.android.gms.maps.CameraUpdateFactory
 import getCurrentLocation
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 data object Home
 
@@ -159,23 +160,22 @@ fun MapViewComposable(
     }
 
     // Function to fetch markers from Firestore
-    fun fetchMarkers() {
-        db.collection(collectionPath)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                firestoreMarkers = snapshot.documents.map { doc ->
-                    MarkerData(
-                        latitude = doc.getDouble("latitude") ?: 0.0,
-                        longitude = doc.getDouble("longitude") ?: 0.0,
-                        title = doc.getString("title") ?: "",
-                        snippet = doc.getString("snippet") ?: "",
-                        imageUrl = doc.getString("imageUrl")
-                    )
-                }
+    suspend fun fetchMarkers() {
+        try {
+            val snapshot = db.collection(collectionPath).get().await()
+
+            firestoreMarkers = snapshot.documents.map { doc ->
+                MarkerData(
+                    latitude = doc.getDouble("latitude") ?: 0.0,
+                    longitude = doc.getDouble("longitude") ?: 0.0,
+                    title = doc.getString("title") ?: "",
+                    snippet = doc.getString("snippet") ?: "",
+                    imageUrl = doc.getString("imageUrl")
+                )
             }
-            .addOnFailureListener { e ->
-                e.printStackTrace()
-            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     // Restore selectedMarker after rotation
@@ -364,9 +364,11 @@ fun HomeScreen(modifier: Modifier = Modifier,
                onProfileClick: () -> Unit
 ) {
     val user = FirebaseAuth.getInstance().currentUser
-    val displayName = UserSession.displayName.value
-        ?: user?.email?.substringBefore("@")
-        ?: "User"
+    val displayName = (
+            UserSession.displayName.value
+                ?: user?.email?.substringBefore("@")
+                ?: "User"
+            ).replaceFirstChar { it.uppercase() }
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var selectedMarker by remember { mutableStateOf<MarkerData?>(null) }
@@ -387,14 +389,14 @@ fun HomeScreen(modifier: Modifier = Modifier,
             TopAppBar(
                 title = {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().padding(end = 10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = "Hello $displayName 👋",
                             color = WhiteText,
-                            fontSize = 18.sp,
+                            fontSize = 20.sp,
                             fontWeight = FontWeight.Medium
                         )
 
