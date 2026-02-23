@@ -565,7 +565,21 @@ fun LocationBottomSheetContent(
             color = NavBrown.copy(alpha = 0.8f)
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        marker.imageUrl?.let { url ->
+            AsyncImage(
+                model = url,
+                contentDescription = "Location Image",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+                contentScale = ContentScale.Crop
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+        }
 
         // avg rating
         val totalStars = reviews.sumOf { it.rating }
