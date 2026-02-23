@@ -148,6 +148,15 @@ fun NavLogic(modifier: Modifier = Modifier) {
                     )
                 }
 
+                is Profile -> NavEntry(key) {
+                    ProfileScreen(
+                        onHomeClick = { backStack.removeLastOrNull() },
+                        onJournalClick = {
+                            backStack.removeLastOrNull()
+                            backStack.add(Journal)
+                        }
+                    )
+                }
                 else -> NavEntry(key = Unit) {
                     Text(text = "Unknown route")
                 }

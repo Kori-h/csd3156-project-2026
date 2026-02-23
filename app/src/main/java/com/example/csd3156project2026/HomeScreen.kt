@@ -326,7 +326,9 @@ fun HomeScreen(modifier: Modifier = Modifier,
                onProfileClick: () -> Unit
 ) {
     val user = FirebaseAuth.getInstance().currentUser
-    val displayName = user?.email?.substringBefore(delimiter = "@") ?: "User"
+    val displayName = UserSession.displayName.value
+        ?: user?.email?.substringBefore("@")
+        ?: "User"
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var selectedMarker by remember { mutableStateOf<MarkerData?>(null) }
