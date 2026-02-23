@@ -169,7 +169,7 @@ fun JournalScreen(
                             modifier = Modifier.size(24.dp)
                         )
                         Text(
-                            text = "Journal",
+                            text = "Reviews",
                             color = CreamText,
                             fontSize = 12.sp
                         )

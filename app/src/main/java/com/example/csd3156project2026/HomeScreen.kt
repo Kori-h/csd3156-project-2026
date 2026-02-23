@@ -455,7 +455,7 @@ fun HomeScreen(modifier: Modifier = Modifier,
                             modifier = Modifier.size(24.dp)
                         )
                         Text(
-                            text = "Journal",
+                            text = "Reviews",
                             color = CardBrown,
                             fontSize = 12.sp
                         )

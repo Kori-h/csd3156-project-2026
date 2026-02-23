@@ -47,15 +47,15 @@ fun TutorialScreen(
         ),
         TutorialPage(
             "See your current location and drop a pin to save a new coffee spot.",
-            R.drawable.tutorial_open
+            R.drawable.tutorial_1
         ),
         TutorialPage(
             "Rate your latte, cappuccino, or cold brew on the go.",
-            R.drawable.tutorial_open
+            R.drawable.tutorial_2
         ),
         TutorialPage(
-            "View your rating history, all in one handy list.",
-            R.drawable.tutorial_open
+            "View different ratings, all in one handy list.",
+            R.drawable.tutorial_3
         )
     )
 

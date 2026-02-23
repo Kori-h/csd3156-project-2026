@@ -109,7 +109,7 @@ fun ProfileScreen(
                         modifier = Modifier.clickable { onJournalClick() }
                     ) {
                         Icon(Icons.Filled.List, "Journal", tint = CardBrown)
-                        Text("Journal", color = CardBrown, fontSize = 12.sp)
+                        Text("Reviews", color = CardBrown, fontSize = 12.sp)
                     }
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
