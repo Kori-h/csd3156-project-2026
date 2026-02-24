@@ -154,19 +154,18 @@ fun JournalScreen(
                             )
                             // star options
                             (5 downTo 1).forEach { stars ->
-                                val capturedStars = stars
                                 DropdownMenuItem(
                                     text = {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            repeat(capturedStars) {
+                                            repeat(stars) {
                                                 Text("★", fontSize = 16.sp, color = StarYellow)
                                             }
-                                            repeat(5 - capturedStars) {
+                                            repeat(5 - stars) {
                                                 Text("☆", fontSize = 16.sp, color = StarYellow)
                                             }
                                         }
                                     },
-                                    onClick = { starFilter = capturedStars; showFilterDropdown = false }
+                                    onClick = { starFilter = stars; showFilterDropdown = false }
                                 )
                             }
                         }

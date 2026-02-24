@@ -55,7 +55,7 @@ fun LoginScreen(
         }
 
         if (FirebaseAuthenticator.isLoggedIn()) {
-            FirebaseAuth.getInstance().signOut()
+            FirebaseAuthenticator.logout()
             UserSession.setDisplayName("")
         }
     }

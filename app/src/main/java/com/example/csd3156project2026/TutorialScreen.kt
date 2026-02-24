@@ -74,6 +74,7 @@ fun TutorialScreen(
             }
 
             // progress bar
+            @Suppress("DEPRECATION")
             LinearProgressIndicator(
                 progress = (pagerState.currentPage + 1) / pages.size.toFloat(),
                 color = NavBrown,

@@ -77,7 +77,7 @@ fun NavLogic(modifier: Modifier = Modifier) {
 
     // block until preferences state is captured
     if (hasSeenTutorial == null) {
-        Box(modifier = Modifier.fillMaxSize())
+        Box(modifier = modifier.fillMaxSize())
         return
     }
 
@@ -97,7 +97,7 @@ fun NavLogic(modifier: Modifier = Modifier) {
             }
         )
     ) {
-        mutableStateListOf<Any>(
+        mutableStateListOf(
             if (hasSeenTutorial == true) Login else Tutorial
         )
     }

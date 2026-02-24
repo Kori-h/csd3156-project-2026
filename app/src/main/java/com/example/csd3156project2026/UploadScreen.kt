@@ -15,8 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -40,7 +38,6 @@ import com.example.csd3156project2026.ui.theme.*
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
-import getCurrentLocation
 import java.io.File
 
 @SuppressLint("DefaultLocale")
@@ -197,7 +194,7 @@ fun UploadScreen(
                     .background(CardBrown)
                     .clickable(enabled = imageBitmap == null) {
                         if (permissionGranted) launchCamera()
-                        else cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                        else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                     },
                 contentAlignment = Alignment.Center
             ) {
@@ -243,7 +240,7 @@ fun UploadScreen(
                 Button(
                     onClick = {
                         if (permissionGranted) launchCamera()
-                        else cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                        else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(10.dp),

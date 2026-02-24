@@ -68,6 +68,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -80,9 +81,9 @@ import com.example.csd3156project2026.ui.theme.NavBrown
 import com.example.csd3156project2026.ui.theme.StarYellow
 import com.example.csd3156project2026.ui.theme.WhiteText
 import com.google.android.gms.maps.CameraUpdateFactory
-import getCurrentLocation
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlin.math.roundToInt
 
 @Composable
 fun MapViewComposable(
@@ -109,7 +110,7 @@ fun MapViewComposable(
         location = if (permissionGranted) {
             try {
                 getCurrentLocation(context) ?: defaultLocation
-            } catch (e: SecurityException) {
+            } catch (_: SecurityException) {
                 defaultLocation
             }
         } else {
@@ -447,7 +448,7 @@ fun LocationBottomSheetContent(
         val avgRating = if (reviews.isNotEmpty()) totalStars.toDouble() / reviews.size else 0.0
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            val roundedRating = Math.round(avgRating).toInt()
+            val roundedRating = avgRating.roundToInt()
             repeat(5) { index ->
                 Text(
                     text = if (index < roundedRating) "★" else "☆",
@@ -617,7 +618,7 @@ fun ReviewDialog(
     val context = LocalContext.current
 
     var comment by remember { mutableStateOf("") }
-    var rating by remember { mutableStateOf(5) }
+    var rating by remember { mutableIntStateOf(5) }
 
     var photoUri by remember { mutableStateOf<Uri?>(null) }
     var reviewImageBitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -626,7 +627,7 @@ fun ReviewDialog(
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val permissionGranted = ContextCompat.checkSelfPermission(
-        context, android.Manifest.permission.CAMERA
+        context, Manifest.permission.CAMERA
     ) == PackageManager.PERMISSION_GRANTED
 
     val cameraLauncher =
@@ -671,7 +672,7 @@ fun ReviewDialog(
             }
         }
 
-    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = {}) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -679,177 +680,202 @@ fun ReviewDialog(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MainBrown)
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-
-                Text(
-                    text = "Review: ${marker.title}",
-                    color = NavBrown,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                // image
-                Box(
+            Box {
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(CardBrown)
-                        .clickable(enabled = reviewImageBitmap == null) {
-                            if (permissionGranted) launchCamera()
-                            else cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
-                        },
-                    contentAlignment = Alignment.Center
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    if (reviewImageBitmap == null) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                painter = androidx.compose.ui.res.painterResource(id = android.R.drawable.ic_menu_camera),
-                                contentDescription = null,
-                                tint = WhiteText.copy(alpha = 0.4f),
-                                modifier = Modifier.size(40.dp)
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                "Tap to add or take a photo",
-                                color = WhiteText.copy(alpha = 0.5f),
-                                fontSize = 13.sp
-                            )
-                        }
-                    } else {
-                        Image(
-                            bitmap = reviewImageBitmap!!.asImageBitmap(),
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                        // X to clear
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(8.dp)
-                                .size(26.dp)
-                                .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f),
-                                    androidx.compose.foundation.shape.CircleShape)
-                                .clickable { reviewImageBitmap = null; photoUri = null },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("✕", color = WhiteText, fontSize = 12.sp)
-                        }
-                    }
-                }
 
-                // camera / file buttons
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Button(
-                        onClick = {
-                            if (permissionGranted) launchCamera()
-                            else cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = ButtonBrown)
-                    ) {
-                        Text("Use Camera", color = WhiteText, fontSize = 13.sp, maxLines = 1)
-                    }
-                    Button(
-                        onClick = {
-                            photoPickerLauncher.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                            )
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = ButtonBrown)
-                    ) {
-                        Text("From File", color = WhiteText, fontSize = 13.sp, maxLines = 1)
-                    }
-                }
-
-                // rating
-                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "Rating: ",
+                        text = "Review: ${marker.title}",
+                        color = NavBrown,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    // image
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(CardBrown)
+                            .clickable(enabled = reviewImageBitmap == null) {
+                                if (permissionGranted) launchCamera()
+                                else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (reviewImageBitmap == null) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    painter = androidx.compose.ui.res.painterResource(id = android.R.drawable.ic_menu_camera),
+                                    contentDescription = null,
+                                    tint = WhiteText.copy(alpha = 0.4f),
+                                    modifier = Modifier.size(40.dp)
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    "Tap to add or take a photo",
+                                    color = WhiteText.copy(alpha = 0.5f),
+                                    fontSize = 13.sp
+                                )
+                            }
+                        } else {
+                            Image(
+                                bitmap = reviewImageBitmap!!.asImageBitmap(),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                            // X to clear
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(8.dp)
+                                    .size(26.dp)
+                                    .background(
+                                        androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f),
+                                        androidx.compose.foundation.shape.CircleShape
+                                    )
+                                    .clickable { reviewImageBitmap = null; photoUri = null },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("✕", color = WhiteText, fontSize = 12.sp)
+                            }
+                        }
+                    }
+
+                    // camera / file buttons
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Button(
+                            onClick = {
+                                if (permissionGranted) launchCamera()
+                                else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = ButtonBrown)
+                        ) {
+                            Text("Use Camera", color = WhiteText, fontSize = 13.sp, maxLines = 1)
+                        }
+                        Button(
+                            onClick = {
+                                photoPickerLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = ButtonBrown)
+                        ) {
+                            Text("From File", color = WhiteText, fontSize = 13.sp, maxLines = 1)
+                        }
+                    }
+
+                    // rating
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "Rating: ",
+                            color = NavBrown,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        for (i in 1..5) {
+                            Text(
+                                text = if (i <= rating) "★" else "☆",
+                                fontSize = 26.sp,
+                                color = StarYellow,
+                                modifier = Modifier
+                                    .padding(end = 4.dp)
+                                    .clickable { rating = i }
+                            )
+                        }
+                    }
+
+                    // comment
+                    Text(
+                        "Description:",
                         color = NavBrown,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    for (i in 1..5) {
+                    OutlinedTextField(
+                        value = comment,
+                        onValueChange = { comment = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(110.dp),
+                        placeholder = {
+                            Text(
+                                "Write your review...",
+                                color = WhiteText.copy(alpha = 0.4f)
+                            )
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = CreamText,
+                            unfocusedBorderColor = CardBrown,
+                            focusedContainerColor = CardBrown,
+                            unfocusedContainerColor = CardBrown,
+                            focusedTextColor = WhiteText,
+                            unfocusedTextColor = WhiteText,
+                            cursorColor = WhiteText
+                        ),
+                        maxLines = 5
+                    )
+
+                    errorMessage?.let {
+                        Text(it, color = androidx.compose.ui.graphics.Color.Red, fontSize = 12.sp)
+                    }
+
+                    // submit
+                    Button(
+                        onClick = {
+                            uploading = true
+                            if (reviewImageBitmap != null) {
+                                uploadToCloudinary(reviewImageBitmap!!) { url ->
+                                    onConfirm(comment, rating, url)
+                                    uploading = false
+                                    onDismiss()
+                                }
+                            } else {
+                                onConfirm(comment, rating, null)
+                                uploading = false
+                                onDismiss()
+                            }
+                        },
+                        modifier = Modifier.align(Alignment.End),
+                        enabled = !uploading,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ButtonBrown,
+                            disabledContainerColor = ButtonBrown.copy(alpha = 0.5f)
+                        ),
+                        shape = RoundedCornerShape(20.dp)
+                    ) {
                         Text(
-                            text = if (i <= rating) "★" else "☆",
-                            fontSize = 26.sp,
-                            color = StarYellow,
-                            modifier = Modifier
-                                .padding(end = 4.dp)
-                                .clickable { rating = i }
+                            text = if (uploading) "Uploading..." else "Submit",
+                            color = WhiteText,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
 
-                // comment
-                Text("Description:", color = NavBrown, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                OutlinedTextField(
-                    value = comment,
-                    onValueChange = { comment = it },
+                // Top-right X button
+                Text(
+                    text = "✕",
+                    color = NavBrown,
+                    fontSize = 18.sp,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(110.dp),
-                    placeholder = { Text("Write your review...", color = WhiteText.copy(alpha = 0.4f)) },
-                    shape = RoundedCornerShape(10.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = CreamText,
-                        unfocusedBorderColor = CardBrown,
-                        focusedContainerColor = CardBrown,
-                        unfocusedContainerColor = CardBrown,
-                        focusedTextColor = WhiteText,
-                        unfocusedTextColor = WhiteText,
-                        cursorColor = WhiteText
-                    ),
-                    maxLines = 5
+                        .align(Alignment.TopEnd)
+                        .padding(12.dp)
+                        .clickable { onDismiss() }
                 )
-
-                errorMessage?.let {
-                    Text(it, color = androidx.compose.ui.graphics.Color.Red, fontSize = 12.sp)
-                }
-
-                // submit
-                Button(
-                    onClick = {
-                        uploading = true
-                        if (reviewImageBitmap != null) {
-                            uploadToCloudinary(reviewImageBitmap!!) { url ->
-                                onConfirm(comment, rating, url)
-                                uploading = false
-                                onDismiss()
-                            }
-                        } else {
-                            onConfirm(comment, rating, null)
-                            uploading = false
-                            onDismiss()
-                        }
-                    },
-                    modifier = Modifier.align(Alignment.End),
-                    enabled = !uploading,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = ButtonBrown,
-                        disabledContainerColor = ButtonBrown.copy(alpha = 0.5f)
-                    ),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Text(
-                        text = if (uploading) "Uploading..." else "Submit",
-                        color = WhiteText,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
             }
         }
     }

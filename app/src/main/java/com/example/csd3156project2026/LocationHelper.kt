@@ -1,3 +1,5 @@
+package com.example.csd3156project2026
+
 import android.Manifest
 import android.content.Context
 import androidx.annotation.RequiresPermission
