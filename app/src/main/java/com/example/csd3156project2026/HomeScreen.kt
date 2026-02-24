@@ -106,14 +106,14 @@ fun MapViewComposable(
             Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
-        if (permissionGranted) {
+        location = if (permissionGranted) {
             try {
-                location = getCurrentLocation(context) ?: defaultLocation
+                getCurrentLocation(context) ?: defaultLocation
             } catch (e: SecurityException) {
-                location = defaultLocation
+                defaultLocation
             }
         } else {
-            location = defaultLocation
+            defaultLocation
         }
     }
 
@@ -356,7 +356,10 @@ fun HomeScreen(modifier: Modifier = Modifier,
     if (showReviewDialog && selectedMarker != null) {
         ReviewDialog(
             marker = selectedMarker!!,
-            onDismiss = {},
+            onDismiss = {
+                showReviewDialog = false
+                showBottomSheet = true
+            },
             onConfirm = { comment, rating, imageUrl ->
                 val userId = user?.uid
                 val newReview = ReviewData(
@@ -754,7 +757,7 @@ fun ReviewDialog(
                         shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = ButtonBrown)
                     ) {
-                        Text("Use Camera", color = WhiteText, fontSize = 13.sp)
+                        Text("Use Camera", color = WhiteText, fontSize = 13.sp, maxLines = 1)
                     }
                     Button(
                         onClick = {
@@ -766,7 +769,7 @@ fun ReviewDialog(
                         shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = ButtonBrown)
                     ) {
-                        Text("From File", color = WhiteText, fontSize = 13.sp)
+                        Text("From File", color = WhiteText, fontSize = 13.sp, maxLines = 1)
                     }
                 }
 

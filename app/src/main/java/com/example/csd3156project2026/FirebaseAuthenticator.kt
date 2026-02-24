@@ -2,8 +2,8 @@ package com.example.csd3156project2026
 
 import com.google.firebase.auth.FirebaseAuth
 
-object FirebaseAuth {
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+object FirebaseAuthenticator {
+    private val auth = FirebaseAuth.getInstance()
 
     fun login(
         email: String,
@@ -13,6 +13,11 @@ object FirebaseAuth {
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
+                    val user = auth.currentUser
+                    val name = user?.displayName
+                        ?: user?.email?.substringBefore("@")
+                        ?: ""
+                    UserSession.setDisplayName(name)
                     onResult(true, null)
                 } else {
                     onResult(false, task.exception?.message)
@@ -28,6 +33,11 @@ object FirebaseAuth {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
+                    val user = auth.currentUser
+                    val name = user?.displayName
+                        ?: user?.email?.substringBefore("@")
+                        ?: ""
+                    UserSession.setDisplayName(name)
                     onResult(true, null)
                 } else {
                     onResult(false, task.exception?.message)

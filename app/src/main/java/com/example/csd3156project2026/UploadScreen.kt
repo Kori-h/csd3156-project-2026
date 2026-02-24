@@ -1,6 +1,7 @@
 package com.example.csd3156project2026
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -42,6 +43,7 @@ import kotlinx.coroutines.launch
 import getCurrentLocation
 import java.io.File
 
+@SuppressLint("DefaultLocale")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UploadScreen(

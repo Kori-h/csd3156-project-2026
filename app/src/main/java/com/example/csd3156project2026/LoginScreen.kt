@@ -34,6 +34,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.sp
 import com.example.csd3156project2026.ui.theme.ButtonBrown
 import com.example.csd3156project2026.ui.theme.WhiteText
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun LoginScreen(
@@ -51,6 +52,11 @@ fun LoginScreen(
         if (isDebugMode) {
             email = "admin@admin.com"
             password = "admin123"
+        }
+
+        if (FirebaseAuthenticator.isLoggedIn()) {
+            FirebaseAuth.getInstance().signOut()
+            UserSession.setDisplayName("")
         }
     }
 
@@ -86,6 +92,7 @@ fun LoginScreen(
                 onValueChange = { email = it },
                 label = { Text(text = "Email", color = WhiteText) },
                 textStyle = androidx.compose.ui.text.TextStyle(color = WhiteText),
+                maxLines = 1,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = WhiteText,
                     unfocusedBorderColor = WhiteText.copy(alpha = 0.5f),
@@ -103,6 +110,7 @@ fun LoginScreen(
                 label = { Text(text = "Password", color = WhiteText) },
                 textStyle = androidx.compose.ui.text.TextStyle(color = WhiteText),
                 visualTransformation = PasswordVisualTransformation(),
+                maxLines = 1,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = WhiteText,
                     unfocusedBorderColor = WhiteText.copy(alpha = 0.5f),
@@ -125,8 +133,9 @@ fun LoginScreen(
                     }
 
                     if (isRegisterMode) {
-                        FirebaseAuth.register(email, password) { success, error ->
+                        FirebaseAuthenticator.register(email, password) { success, error ->
                             if (success) {
+                                errorMessage = null
                                 onLoginSuccess()
                             } else {
                                 errorMessage = error
@@ -134,8 +143,9 @@ fun LoginScreen(
                             }
                         }
                     } else {
-                        FirebaseAuth.login(email, password) { success, error ->
+                        FirebaseAuthenticator.login(email, password) { success, error ->
                             if (success) {
+                                errorMessage = null
                                 onLoginSuccess()
                             } else {
                                 errorMessage = error

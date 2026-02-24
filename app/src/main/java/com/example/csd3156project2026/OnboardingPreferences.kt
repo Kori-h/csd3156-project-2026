@@ -26,4 +26,3 @@ class OnboardingPreferences(private val context: Context) {
         }
     }
 }
-

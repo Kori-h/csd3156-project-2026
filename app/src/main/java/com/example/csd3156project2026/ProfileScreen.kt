@@ -24,7 +24,8 @@ import com.google.firebase.auth.UserProfileChangeRequest
 fun ProfileScreen(
     modifier: Modifier = Modifier,
     onHomeClick: () -> Unit,
-    onJournalClick: () -> Unit
+    onJournalClick: () -> Unit,
+    onLogout: () -> Unit
 ) {
     val user = FirebaseAuth.getInstance().currentUser
     val email = user?.email ?: "Guest"
@@ -125,8 +126,24 @@ fun ProfileScreen(
                 }
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = {
+                    FirebaseAuth.getInstance().signOut()
+                    UserSession.setDisplayName("")
+                    onLogout()
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Red
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Log Out", color = WhiteText)
+            }
+
             if (showSavedMessage) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "Changes saved!",
                     color = CreamText,

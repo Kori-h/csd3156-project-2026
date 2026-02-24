@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -72,7 +73,13 @@ fun NavLogic(modifier: Modifier = Modifier) {
 
     val hasSeenTutorial by onboardingPreferences
         .hasSeenTutorial
-        .collectAsState(initial = false)
+        .collectAsState(initial = null)
+
+    // block until preferences state is captured
+    if (hasSeenTutorial == null) {
+        Box(modifier = Modifier.fillMaxSize())
+        return
+    }
 
     val backStack = rememberSaveable(
         saver = listSaver(
@@ -91,7 +98,7 @@ fun NavLogic(modifier: Modifier = Modifier) {
         )
     ) {
         mutableStateListOf<Any>(
-            if (hasSeenTutorial) Login else Tutorial
+            if (hasSeenTutorial == true) Login else Tutorial
         )
     }
 
@@ -176,6 +183,12 @@ fun NavLogic(modifier: Modifier = Modifier) {
                         onJournalClick = {
                             backStack.removeLastOrNull()
                             backStack.add(Journal)
+                        },
+                        onLogout = {
+                            // go to home
+                            backStack.removeLastOrNull()
+                            // go to login
+                            backStack.removeLastOrNull()
                         }
                     )
                 }
