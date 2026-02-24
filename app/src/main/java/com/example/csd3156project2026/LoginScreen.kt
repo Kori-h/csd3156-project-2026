@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -20,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -32,8 +35,6 @@ import androidx.compose.ui.unit.sp
 import com.example.csd3156project2026.ui.theme.ButtonBrown
 import com.example.csd3156project2026.ui.theme.WhiteText
 
-data object Login
-
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
@@ -43,13 +44,13 @@ fun LoginScreen(
     var password by rememberSaveable { mutableStateOf(value = "") }
     var errorMessage by rememberSaveable { mutableStateOf<String?>(value = null) }
     var isRegisterMode by rememberSaveable { mutableStateOf(value = false) }
-
+    var isProcessing by remember { mutableStateOf(false) }
     val isDebugMode = true
 
     LaunchedEffect(isDebugMode) {
         if (isDebugMode) {
-            email = "test@example.com"
-            password = "test123"
+            email = "admin@admin.com"
+            password = "admin123"
         }
     }
 
@@ -115,16 +116,9 @@ fun LoginScreen(
 
             Button(
                 onClick = {
-                    if (email == "test@example.com" && password == "test123") {
-                        onLoginSuccess()
-                        return@Button
-                    }
+                    if (isProcessing) return@Button
 
-                    if (password == "debug123") {
-                        onLoginSuccess()
-                        return@Button
-                    }
-
+                    isProcessing = true
                     if (email.isBlank() || password.isBlank()) {
                         errorMessage = "Email and password cannot be empty"
                         return@Button
@@ -136,6 +130,7 @@ fun LoginScreen(
                                 onLoginSuccess()
                             } else {
                                 errorMessage = error
+                                isProcessing = false
                             }
                         }
                     } else {
@@ -144,6 +139,7 @@ fun LoginScreen(
                                 onLoginSuccess()
                             } else {
                                 errorMessage = error
+                                isProcessing = false
                             }
                         }
                     }
@@ -156,7 +152,15 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
             ) {
-                Text(text = if (isRegisterMode) "Register" else "Login")
+                if (isProcessing) {
+                    CircularProgressIndicator(
+                        color = WhiteText,
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(text = if (isRegisterMode) "Register" else "Login")
+                }
             }
 
             Spacer(modifier = Modifier.height(height = 8.dp))

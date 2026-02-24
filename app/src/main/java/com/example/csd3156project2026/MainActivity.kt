@@ -27,6 +27,13 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import kotlinx.coroutines.launch
 
+data object Tutorial
+data object Login
+data object Home
+data object Journal
+data object Profile
+data object Upload
+
 class MainActivity : ComponentActivity() {
     private val requestPermissionLauncher =
         registerForActivityResult(
@@ -135,23 +142,37 @@ fun NavLogic(modifier: Modifier = Modifier) {
                 is Journal -> NavEntry(key) {
                     JournalScreen(
                         modifier = Modifier.fillMaxSize(),
-                        onHomeClick = { backStack.removeLastOrNull() },
-                        onProfileClick = { backStack.add(Profile) },
-                        onUploadClick = { backStack.add(Upload) }
+                        onHomeClick = {
+                            backStack.removeLastOrNull()
+                        },
+                        onProfileClick = {
+                            backStack.removeLastOrNull()
+                            backStack.add(Profile)
+                        }
                     )
                 }
 
                 is Upload -> NavEntry(key) {
                     UploadScreen(
-                        onClose = {
+                        onHomeClick = {
                             backStack.removeLastOrNull()
+                        },
+                        onJournalClick = {
+                            backStack.removeLastOrNull()
+                            backStack.add(Journal)
+                        },
+                        onProfileClick = {
+                            backStack.removeLastOrNull()
+                            backStack.add(Profile)
                         }
                     )
                 }
 
                 is Profile -> NavEntry(key) {
                     ProfileScreen(
-                        onHomeClick = { backStack.removeLastOrNull() },
+                        onHomeClick = {
+                            backStack.removeLastOrNull()
+                        },
                         onJournalClick = {
                             backStack.removeLastOrNull()
                             backStack.add(Journal)
@@ -165,11 +186,3 @@ fun NavLogic(modifier: Modifier = Modifier) {
         }
     )
 }
-
-data object Upload
-
-data object Tutorial
-
-data object Journal
-
-data object Profile

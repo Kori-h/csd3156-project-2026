@@ -34,11 +34,10 @@ data class JournalEntry(
 fun JournalScreen(
     modifier: Modifier = Modifier,
     onHomeClick: () -> Unit,
-    onProfileClick: () -> Unit,
-    onUploadClick: () -> Unit
+    onProfileClick: () -> Unit
 ) {
     val user = FirebaseAuth.getInstance().currentUser
-    val userId = user?.email?.substringBefore("@") ?: "Anonymous"
+    val userId = user?.uid
 
     var starFilter by rememberSaveable { mutableStateOf<Int?>(null) }
     var showFilterDropdown by rememberSaveable { mutableStateOf(false) }
@@ -58,7 +57,9 @@ fun JournalScreen(
                 val reviews = reviewSnapshot.documents.map { doc ->
                     ReviewData(
                         markerId = doc.getString("markerId") ?: "",
+                        markerName = doc.getString("markerName") ?: "",
                         userId = doc.getString("userId") ?: "",
+                        username = doc.getString("username") ?: "",
                         rating = doc.getLong("rating")?.toInt() ?: 0,
                         comment = doc.getString("comment") ?: "",
                         imageUrl = doc.getString("imageUrl")
@@ -74,7 +75,7 @@ fun JournalScreen(
                     journalEntries = reviews.map { review ->
                         JournalEntry(
                             review = review,
-                            markerTitle = review.markerId,
+                            markerTitle = review.markerName,
                             markerSnippet = markerMap[review.markerId] ?: ""
                         )
                     }
@@ -102,100 +103,15 @@ fun JournalScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = MainBrown,
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "All Entries",
-                            color = WhiteText,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        androidx.compose.foundation.Image(
-                            painter = androidx.compose.ui.res.painterResource(id = R.drawable.logo),
-                            contentDescription = "Logo",
-                            modifier = Modifier.size(80.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = NavBrown,
-                    titleContentColor = WhiteText
-                )
-            )
+            AppTopBar("All Entries")
         },
         bottomBar = {
-            BottomAppBar(
-                containerColor = NavBrown,
-                contentColor = WhiteText
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    // home
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable {
-                            onHomeClick()
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Home,
-                            contentDescription = "Home",
-                            tint = CardBrown,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text(
-                            text = "Home",
-                            color = CardBrown,
-                            fontSize = 12.sp
-                        )
-                    }
-
-                    // journal
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable { }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.List,
-                            contentDescription = "Journal",
-                            tint = CreamText,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text(
-                            text = "Reviews",
-                            color = CreamText,
-                            fontSize = 12.sp
-                        )
-                    }
-
-                    // profile
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable {
-                            onProfileClick()
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Person,
-                            contentDescription = "Profile",
-                            tint = CardBrown,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text(
-                            text = "Profile",
-                            color = CardBrown,
-                            fontSize = 12.sp
-                        )
-                    }
-                }
-            }
+            AppBottomBar(
+                currentRoute = "journal",
+                onHomeClick = onHomeClick,
+                onJournalClick = {},
+                onProfileClick = onProfileClick
+            )
         }
     ) { paddingValues ->
         Column(
@@ -204,7 +120,7 @@ fun JournalScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // search bar
             OutlinedTextField(
@@ -299,29 +215,6 @@ fun JournalScreen(
                 }
             }
         }
-
-        // add new coffee shop
-        //Box(
-        //    modifier = Modifier
-        //        .fillMaxSize()
-        //        .padding(paddingValues)
-        //        .padding(bottom = 16.dp),
-        //    contentAlignment = Alignment.BottomCenter
-        //) {
-        //    Button(
-        //        onClick = { onUploadClick() },
-        //        colors = ButtonDefaults.buttonColors(containerColor = ButtonBrown),
-        //        shape = RoundedCornerShape(24.dp),
-        //        modifier = Modifier.padding(horizontal = 32.dp)
-        //    ) {
-        //        Text(
-        //            text = "Add New Entry",
-        //            color = WhiteText,
-        //            fontWeight = FontWeight.SemiBold,
-        //            fontSize = 15.sp
-        //        )
-        //    }
-        //}
     }
 }
 

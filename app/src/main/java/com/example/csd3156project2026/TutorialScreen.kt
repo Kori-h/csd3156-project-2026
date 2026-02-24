@@ -4,10 +4,10 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -39,7 +39,6 @@ data class TutorialPage(
 fun TutorialScreen(
     onFinish: () -> Unit
 ) {
-
     val pages = listOf(
         TutorialPage(
             "Explore one cup at a time",
@@ -65,8 +64,8 @@ fun TutorialScreen(
     Box {
         Column(
             modifier = Modifier.fillMaxSize()
+                               .navigationBarsPadding()
         ) {
-
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.weight(1f)
@@ -117,7 +116,6 @@ fun TutorialScreen(
 
 @Composable
 fun TutorialPageContent(page: TutorialPage) {
-
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -145,15 +143,11 @@ fun TutorialPageContent(page: TutorialPage) {
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Text(
                 text = page.subtitle,
                 color = WhiteText,
                 style = MaterialTheme.typography.headlineLarge
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
         }
     }
 }

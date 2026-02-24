@@ -45,7 +45,9 @@ import java.io.File
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UploadScreen(
-    onClose: () -> Unit
+    onHomeClick: () -> Unit,
+    onProfileClick: () -> Unit,
+    onJournalClick: () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -56,7 +58,6 @@ fun UploadScreen(
 
     var locationName by rememberSaveable { mutableStateOf("") }
     var description by rememberSaveable { mutableStateOf("") }
-    var rating by rememberSaveable { mutableStateOf(0) }
     var isUploading by rememberSaveable { mutableStateOf(false) }
 
     var locationError by rememberSaveable { mutableStateOf<String?>(null) }
@@ -66,7 +67,7 @@ fun UploadScreen(
     var location by remember { mutableStateOf<LatLng?>(null) }
 
     val permissionGranted = ContextCompat.checkSelfPermission(
-        context, android.Manifest.permission.CAMERA
+        context, Manifest.permission.CAMERA
     ) == PackageManager.PERMISSION_GRANTED
 
     // fetch current location
@@ -132,70 +133,15 @@ fun UploadScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = MainBrown,
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "New Entry",
-                            color = WhiteText,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Image(
-                            painter = painterResource(id = R.drawable.logo),
-                            contentDescription = "Logo",
-                            modifier = Modifier.size(80.dp)
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onClose) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = WhiteText
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = NavBrown,
-                    titleContentColor = WhiteText
-                )
-            )
+            AppTopBar("Upload")
         },
         bottomBar = {
-            BottomAppBar(
-                containerColor = NavBrown,
-                contentColor = WhiteText
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable { onClose() }
-                    ) {
-                        Icon(Icons.Filled.Home, contentDescription = "Home",
-                            tint = CardBrown, modifier = Modifier.size(24.dp))
-                        Text("Home", color = CardBrown, fontSize = 12.sp)
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Filled.List, contentDescription = "Journal",
-                            tint = CardBrown, modifier = Modifier.size(24.dp))
-                        Text("Journal", color = CardBrown, fontSize = 12.sp)
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Filled.Person, contentDescription = "Profile",
-                            tint = CardBrown, modifier = Modifier.size(24.dp))
-                        Text("Profile", color = CardBrown, fontSize = 12.sp)
-                    }
-                }
-            }
+            AppBottomBar(
+                currentRoute = "upload",
+                onHomeClick = onHomeClick,
+                onJournalClick = onJournalClick,
+                onProfileClick = onProfileClick
+            )
         }
     ) { paddingValues ->
         Column(
@@ -317,22 +263,6 @@ fun UploadScreen(
                 }
             }
 
-            // --- Rating ---
-            //Row(verticalAlignment = Alignment.CenterVertically) {
-            //    Text("Rating: ", color = NavBrown, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-            //    Spacer(modifier = Modifier.width(8.dp))
-            //    for (i in 1..5) {
-            //        Text(
-            //            text = "★",
-            //            fontSize = 28.sp,
-            //            color = if (i <= rating) StarYellow else WhiteText.copy(alpha = 0.3f),
-            //            modifier = Modifier
-            //                .padding(end = 4.dp)
-            //                .clickable { rating = i }
-            //        )
-            //    }
-            //}
-
             // desc
             Text("Description:", color = NavBrown, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
             OutlinedTextField(
@@ -391,7 +321,7 @@ fun UploadScreen(
                                         FirebaseFirestore.getInstance()
                                             .collection("markers")
                                             .add(marker)
-                                            .addOnSuccessListener { onClose() }
+                                            .addOnSuccessListener { onHomeClick() }
                                     } else {
                                         errorMessage = "Image upload failed"
                                         isUploading = false
