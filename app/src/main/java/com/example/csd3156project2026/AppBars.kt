@@ -4,7 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,8 +13,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.csd3156project2026.ui.theme.CardBrown
 import com.example.csd3156project2026.ui.theme.CreamText
-import com.example.csd3156project2026.ui.theme.MainBrown
 import com.example.csd3156project2026.ui.theme.NavBrown
 import com.example.csd3156project2026.ui.theme.WhiteText
 
@@ -101,7 +99,7 @@ fun AppBottomBar(
             )
 
             BottomBarItem(
-                icon = Icons.Filled.List,
+                icon = Icons.AutoMirrored.Filled.List,
                 label = "Reviews",
                 selected = currentRoute == "journal",
                 onClick = onJournalClick
@@ -159,30 +157,30 @@ fun CreditsScreen(onDismiss: () -> Unit) {
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = "Logo",
-            modifier = Modifier.size(200.dp)
+            modifier = Modifier.size(160.dp)
         )
 
         Spacer(modifier = Modifier.height(20.dp))
         Text("Group 20 - Team Members:", fontSize = 20.sp, color = WhiteText)
         Spacer(modifier = Modifier.height(20.dp))
 
-        Text("Lim Jun Kiat (2301484)", fontSize = 16.sp, color = WhiteText)
-        Text("Kok Rui Huang (2301389)", fontSize = 16.sp, color = WhiteText)
-        Text("Hermione See Kai Xin (2301494)", fontSize = 16.sp, color = WhiteText)
-        Text("Yu Zhiwei Alvin (2301498)", fontSize = 16.sp, color = WhiteText)
-        Text("Muhammad Hafiz Bin Onn (2301265)", fontSize = 16.sp, color = WhiteText)
-        Text("Mohamed Arshad Bin Mohamed Hussain (2301364)", fontSize = 16.sp, color = WhiteText)
+        Text("Lim Jun Kiat (2301484)", fontSize = 12.sp, color = WhiteText)
+        Text("Kok Rui Huang (2301389)", fontSize = 12.sp, color = WhiteText)
+        Text("Hermione See Kai Xin (2301494)", fontSize = 12.sp, color = WhiteText)
+        Text("Yu Zhiwei Alvin (2301498)", fontSize = 12.sp, color = WhiteText)
+        Text("Muhammad Hafiz Bin Onn (2301265)", fontSize = 12.sp, color = WhiteText)
+        Text("Mohamed Arshad Bin Mohamed Hussain (2301364)", fontSize = 12.sp, color = WhiteText)
 
         Spacer(modifier = Modifier.height(20.dp))
         Text("Special Thanks", fontSize = 20.sp, color = WhiteText)
         Spacer(modifier = Modifier.height(20.dp))
-        Text("Claud Comair", fontSize = 16.sp, color = WhiteText)
-        Text("Dr. Kan Chen", fontSize = 16.sp, color = WhiteText)
-        Text("Marcus Tan Kee Woon", fontSize = 16.sp, color = WhiteText)
-        Text("Chen Ming", fontSize = 16.sp, color = WhiteText)
+        Text("Claud Comair", fontSize = 12.sp, color = WhiteText)
+        Text("Dr. Kan Chen", fontSize = 12.sp, color = WhiteText)
+        Text("Marcus Tan Kee Woon", fontSize = 12.sp, color = WhiteText)
+        Text("Chen Ming", fontSize = 12.sp, color = WhiteText)
 
         Spacer(modifier = Modifier.height(20.dp))
-        Text("© 2026 DigiPen", fontSize = 16.sp, color = WhiteText)
+        Text("© 2026 DigiPen", fontSize = 12.sp, color = WhiteText)
         Spacer(modifier = Modifier.height(20.dp))
 
         Text("Thank you for using our app!", fontSize = 20.sp, color = WhiteText)
